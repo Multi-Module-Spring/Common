@@ -7,7 +7,7 @@ import java.util.Objects;
 
 @Getter
 @AllArgsConstructor
-public enum CountryEnum {
+public enum Country {
     DEFAULT("NO_COUNTRY",0),
     US("United States", 1),
     VN("Vietnam", 2),
@@ -17,7 +17,7 @@ public enum CountryEnum {
     private final Integer code;
 
     public static String fromCode(Integer code) {
-        for (CountryEnum country : values()) {
+        for (Country country : values()) {
             if (Objects.equals(country.code, code)) {
                 return country.getName();
             }

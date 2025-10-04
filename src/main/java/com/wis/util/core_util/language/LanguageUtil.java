@@ -5,4 +5,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface LanguageUtil {
     Language from(HttpServletRequest request);
+
+    Language from();
 }

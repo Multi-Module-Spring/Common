@@ -2,8 +2,11 @@ package com.wis.util.message.impl;
 
 import com.wis.enums.Language;
 import com.wis.exception.ServiceException;
+import com.wis.util.core_util.language.CustomLanguageResolver;
+import com.wis.util.core_util.language.LanguageUtil;
 import com.wis.util.message.MessageUtil;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -26,7 +29,9 @@ import java.util.*;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor()
 public class MessageUtilImpl implements MessageUtil {
+    protected final LanguageUtil languageUtil;
 
     public String getI18n(String key) {
         return getI18n(key,"Error occurred", List.of());
@@ -41,8 +46,8 @@ public class MessageUtilImpl implements MessageUtil {
     }
 
     public String getI18n(String key,String detail, List<Object> args) {
-        Locale locale = LocaleContextHolder.getLocale();
-        return getI18n(locale, key,detail, args);
+       Language currentLang = languageUtil.from();
+        return getI18n(currentLang, key,detail, args);
     }
 
 //    public String getI18n(String bundle, Locale locale, String key,String detail, List<Object> args) {
@@ -56,20 +61,20 @@ public class MessageUtilImpl implements MessageUtil {
 //        }
 //    }
 
-    private String getI18n(Locale locale, String key, String detail, List<Object> args) {
-        Map<Locale, String> localeMap = translations.get(key);
+    private String getI18n(Language currentLang, String key, String detail, List<Object> args) {
+        Map<String, String> languageMap = translations.get(key);
 
-        String message = (localeMap != null) ? localeMap.get(locale) : null;
+        String message = (languageMap != null) ? languageMap.get(currentLang.name()) : null;
 
         if (message == null) {
-            log.warn("Không tìm thấy key '{}' cho locale '{}'", key, locale);
+            log.warn("Không tìm thấy key '{}' cho locale '{}'", key, currentLang.name());
             throw ServiceException.of(HttpStatus.CONFLICT, "I18N_UNKNOWN", List.of(key,detail));
         }
 
         return MessageFormat.format(message, args != null ? args.toArray() : null);
     }
 
-    private final Map<String, Map<Locale, String>> translations = new HashMap<>();
+    private final Map<String, Map<String, String>> translations = new HashMap<>();
 
     @PostConstruct
     void init() {
@@ -119,7 +124,7 @@ public class MessageUtilImpl implements MessageUtil {
                         String value = cell.getStringCellValue();
                         translations
                                 .computeIfAbsent(key, k -> new HashMap<>())
-                                .put(lang.getLocale(), value);
+                                .put(lang.name(), value);
                     }
                 }
 

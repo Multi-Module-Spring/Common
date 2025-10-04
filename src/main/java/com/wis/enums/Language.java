@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 @Getter
 public enum Language {
@@ -16,52 +15,70 @@ public enum Language {
 
     public static final Language DEFAULT_LANG = EN_US;
 
-    private final Locale locale;
+    private final String language;
+    private final String country;
 
     Language(String language, String country) {
-        this.locale = Locale.of(language, country);
+        this.language = language;
+        this.country = country;
     }
 
-    public static Locale getDefault() {
-        return EN_US.locale;
+    // ------------------ HÀM TIỆN ÍCH ------------------
+
+    public static Language getDefault() {
+        return DEFAULT_LANG;
     }
 
-    public static Language fromLangText(Locale locale) {
-        if (locale == null) {
+    public static Language fromLanguageCode(String code) {
+        if (code == null || code.isBlank()) {
             return DEFAULT_LANG;
         }
-        for (Language e : Language.values()) {
-            if (e.getLocale().equals(locale)) {
-                return e;
-            }
-        }
-        throw ServiceException.of(HttpStatus.BAD_REQUEST, "ENUM_NOT_SUPPORTED");
-    }
-
-    public String getPropertiesFormat() {
-        return this.getLocale().getDisplayLanguage();
-    }
-
-    public static Language fromLanguageCode(String langCode) {
-        if (langCode == null || langCode.isBlank()) {
-            return DEFAULT_LANG;
-        }
-        for (Language e : Language.values()) {
-            if (e.getLocale().getLanguage().equalsIgnoreCase(langCode)) {
-                return e;
-            }
-        }
-        throw ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED");
-    }
-
-    public static List<Locale> supportedLocales() {
         return Arrays.stream(Language.values())
-                .map(Language::getLocale)
+                .filter(e -> e.language.equalsIgnoreCase(code))
+                .findFirst()
+                .orElseThrow(() ->
+                        ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED"));
+    }
+
+    public static Language fromCountryCode(String code) {
+        if (code == null || code.isBlank()) {
+            return DEFAULT_LANG;
+        }
+        return Arrays.stream(Language.values())
+                .filter(e -> e.country.equalsIgnoreCase(code))
+                .findFirst()
+                .orElseThrow(() ->
+                        ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED"));
+    }
+
+    public static Language fromCode(String code) {
+        if (code == null || code.isBlank()) {
+            return DEFAULT_LANG;
+        }
+        String normalized = code.replace("_", "-");
+        return Arrays.stream(Language.values())
+                .filter(e -> (e.language + "-" + e.country).equalsIgnoreCase(normalized))
+                .findFirst()
+                .orElseThrow(() ->
+                        ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED"));
+    }
+
+    public static List<String> supportedCodes() {
+        return Arrays.stream(Language.values())
+                .map(Language::toCode)
                 .toList();
     }
 
-    public static boolean isSupported(Locale locale) {
-        return Arrays.stream(Language.values())
-                .anyMatch(e -> e.getLocale().equals(locale));
+    public static boolean isSupported(String code) {
+        try {
+            fromCode(code);
+            return true;
+        } catch (ServiceException e) {
+            return false;
+        }
+    }
+
+    public String toCode() {
+        return language + "-" + country;
     }
 }
