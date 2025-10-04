@@ -4,6 +4,8 @@ import com.wis.exception.ServiceException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 @Getter
@@ -29,10 +31,7 @@ public enum Language {
             return DEFAULT_LANG;
         }
         for (Language e : Language.values()) {
-            if (e.getLocale()
-                    .equals(
-                            locale
-                    )) {
+            if (e.getLocale().equals(locale)) {
                 return e;
             }
         }
@@ -41,5 +40,28 @@ public enum Language {
 
     public String getPropertiesFormat() {
         return this.getLocale().getDisplayLanguage();
+    }
+
+    public static Language fromLanguageCode(String langCode) {
+        if (langCode == null || langCode.isBlank()) {
+            return DEFAULT_LANG;
+        }
+        for (Language e : Language.values()) {
+            if (e.getLocale().getLanguage().equalsIgnoreCase(langCode)) {
+                return e;
+            }
+        }
+        throw ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED");
+    }
+
+    public static List<Locale> supportedLocales() {
+        return Arrays.stream(Language.values())
+                .map(Language::getLocale)
+                .toList();
+    }
+
+    public static boolean isSupported(Locale locale) {
+        return Arrays.stream(Language.values())
+                .anyMatch(e -> e.getLocale().equals(locale));
     }
 }
