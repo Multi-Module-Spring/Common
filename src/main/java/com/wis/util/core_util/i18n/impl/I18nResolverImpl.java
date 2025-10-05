@@ -4,6 +4,7 @@ import com.wis.exception.ServiceException;
 import com.wis.annotation.I18n;
 import com.wis.util.core_util.i18n.I18nResolver;
 import com.wis.util.message.MessageUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
+@Slf4j
 public class I18nResolverImpl implements I18nResolver {
 
     private final MessageUtil messageUtil;
@@ -22,6 +24,7 @@ public class I18nResolverImpl implements I18nResolver {
     }
 
     @Override
+
     public void resolveI18nFields(Object dto) {
         if (dto == null) return;
 
@@ -56,8 +59,9 @@ public class I18nResolverImpl implements I18nResolver {
                                     argField.setAccessible(true);
                                     return argField.get(dto);
                                 } catch (Exception e) {
-                                    throw ServiceException.of(HttpStatus.BAD_REQUEST,"I18N_UNKNOWN");
+                                   log.info("error {}",e.getMessage());
                                 }
+                                return null;
                             })
                             .toList();
 
@@ -78,7 +82,7 @@ public class I18nResolverImpl implements I18nResolver {
                 }
 
             } catch (Exception e) {
-                throw ServiceException.of(HttpStatus.BAD_REQUEST,"I18N_UNKNOWN");
+                log.info("error {}",e.getMessage());
             }
         }
     }

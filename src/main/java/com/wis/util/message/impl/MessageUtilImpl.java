@@ -28,11 +28,11 @@ public class MessageUtilImpl implements MessageUtil {
     protected final LanguageUtil languageUtil;
 
     public String getI18n(String key) {
-        return getI18n(key,"Error occurred", List.of());
+        return getI18n(key,key, List.of());
     }
 
     public String getI18n(String key, List<Object> args) {
-        return getI18n(key,"Error occurred", args);
+        return getI18n(key,key, args);
     }
 
     public String getI18n(String key,String detail) {
@@ -62,7 +62,7 @@ public class MessageUtilImpl implements MessageUtil {
 
         if (message == null) {
             log.warn("Không tìm thấy key '{}' cho locale '{}'", key, currentLang.name());
-            throw ServiceException.of(HttpStatus.CONFLICT, "I18N_UNKNOWN", List.of(key,detail));
+            return "{" + key + "}";
         }
 
         return MessageFormat.format(message, args != null ? args.toArray() : null);

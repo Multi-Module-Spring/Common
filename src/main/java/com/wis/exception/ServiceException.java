@@ -21,7 +21,6 @@ public class ServiceException extends RuntimeException {
                             String detail,
                             List<Object> args
                             ) {
-        super(stringKey);
         this.httpStatus = httpStatus != null ? httpStatus : HttpStatus.BAD_REQUEST;
         this.stringKey = stringKey;
         this.hasDetail = hasDetail;
@@ -38,7 +37,7 @@ public class ServiceException extends RuntimeException {
     }
 
     public static ServiceException of(HttpStatus httpStatus, String stringKey, List<Object> args) {
-        return new ServiceException(httpStatus, stringKey, false, null, args);
+        return new ServiceException(httpStatus, stringKey, true, null, args);
     }
 
 
