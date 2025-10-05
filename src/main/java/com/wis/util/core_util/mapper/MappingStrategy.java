@@ -1,6 +1,6 @@
 package com.wis.util.core_util.mapper;
 
-public enum MapperStrategy {
+public enum MappingStrategy {
     DEFAULT,
     JSON_PROPERTY
 }

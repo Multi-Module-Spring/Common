@@ -1,15 +1,38 @@
 package com.wis.util.core_util.mapper;
 
-import java.lang.reflect.Type;
-import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public interface Mapper {
-    <DESTINATION> DESTINATION map(Object source, Type type);
-    <DESTINATION> DESTINATION map(Object source, Type type, MapperStrategy mapperStrategy);
-    <DESTINATION> DESTINATION selfMap(DESTINATION source);
-    <DESTINATION> DESTINATION selfMap(DESTINATION source, MapperStrategy mapperStrategy);
-    <SOURCE, DESTINATION> List<DESTINATION> mapList(List<SOURCE> sourceList, Class<DESTINATION> destinationType);
-    <SOURCE, DESTINATION> List<DESTINATION> mapList(List<SOURCE> sourceList, Class<DESTINATION> destinationType, MapperStrategy mapperStrategy);
-    <SOURCE> List<SOURCE> selfMapList(List<SOURCE> sourceList);
-    <SOURCE> List<SOURCE> selfMapList(List<SOURCE> sourceList, MapperStrategy mapperStrategy);
+
+    <F, T> T mapViaString(F from, Class<T> pojoType);
+
+    <F, T> T mapViaString(F from, Class<T> pojoType, MappingStrategy strategy);
+
+    <T> T deepClone(T object, Class<T> clazz);
+
+    <T> T deepClone(T object, Class<T> clazz, MappingStrategy strategy);
+
+    <T> T mapTo(Map<String, Object> mapData, Class<T> pojoType);
+
+    <T> T mapTo(Map<String, Object> mapData, Class<T> pojoType, MappingStrategy strategy);
+
+    <F, T> T mapTo(F from, Class<T> type);
+
+    <F, T> T mapTo(F from, Class<T> type, MappingStrategy strategy);
+
+    <F, T> Function<F, T> mapTo(Class<T> type);
+
+    <F, T> Function<F, T> mapTo(Class<T> type, MappingStrategy strategy);
+
+    <F, T> T updateValue(T to, F from);
+
+    <F, T> T updateValue(T to, F from, MappingStrategy strategy);
+
+    @SuppressWarnings("unchecked")
+    <T> void switchValue(T left, T right);
+
+    <T> T read(String json, Class<T> clazz);
+
+    String write(Object object);
 }

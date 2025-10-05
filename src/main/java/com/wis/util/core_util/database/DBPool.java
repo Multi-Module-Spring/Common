@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Component
@@ -30,10 +32,10 @@ public class DBPool {
 
             setParameters(stmt, params.toArray());
 
-            log.info("[SQL_EXECUTE] Called from: {}", getCallerInfo());
-            log.info("[SQL_EXECUTE] Target class: {}", clazz.getSimpleName());
-            log.info("[SQL_EXECUTE] SQL: {}", sql);
-            log.info("[SQL_EXECUTE] Params: {}", params);
+//            log.info("[SQL_EXECUTE] Called from: {}", getCallerInfo());
+//            log.info("[SQL_EXECUTE] Target class: {}", clazz.getSimpleName());
+//            log.info("[SQL_EXECUTE] SQL: {}", sql);
+//            log.info("[SQL_EXECUTE] Params: {}", params);
 
             return stmt.executeUpdate();
 
@@ -47,8 +49,8 @@ public class DBPool {
     }
 
     public <T> List<T> executeQuery(String sql, Class<T> clazzTobeMapped, Object... params) {
-        if(pagingContext.get() != null) {
-            sql= applyPagingWithCount(sql);
+        if (pagingContext.get() != null) {
+            sql = applyPagingWithCount(sql);
         }
         sql = convertPostgresStyle(sql, params.length);
 
@@ -58,7 +60,7 @@ public class DBPool {
             setParameters(stmt, params);
             ResultSet rs = stmt.executeQuery();
 
-            List<T> result = new ArrayList<>();
+            List<Map<String, Object>> rows = new ArrayList<>();
             Integer totalCount = null;
 
             while (rs.next()) {
@@ -69,39 +71,25 @@ public class DBPool {
                     } catch (SQLException ignored) {
                     }
                 }
-                Map<String, Object> rowMap = mapRowToMap(rs);
-                T obj = mapper.map(rowMap, clazzTobeMapped);
-                result.add(obj);
+                rows.add(mapRowToMap(rs));
             }
 
-            log.info("[SQL_EXECUTE] Called from: {}", getCallerInfo());
-            log.info("[SQL_EXECUTE] SQL: {}", sql);
-            log.info("[SQL_EXECUTE] Params: {}", Arrays.toString(params));
+//            log.info("[SQL_EXECUTE] Called from: {}", getCallerInfo());
+//            log.info("[SQL_EXECUTE] SQL: {}", sql);
+//            log.info("[SQL_EXECUTE] Params: {}", Arrays.toString(params));
 
-            return result;
+            return rows.stream()
+                    .map(mapper.mapTo(clazzTobeMapped))
+                    .toList();
         } catch (SQLException e) {
             throw ServiceException.withDetail("BAD_REQUEST", e.getMessage(), null);
         }
     }
 
-
-    private String getCallerInfo() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (int i = 2; i < stackTrace.length; i++) {
-            StackTraceElement element = stackTrace[i];
-            String className = element.getClassName();
-            if (!className.equals(this.getClass().getName()) && !className.startsWith("java.")) {
-                return className + "#" + element.getMethodName() + " (line " + element.getLineNumber() + ")";
-            }
-        }
-        return "Unknown Source";
-    }
-
-
     public <T> T executeQueryUnique(String sql, Class<T> clazzTobeMapped, Object... params) {
         List<T> results = executeQuery(sql, clazzTobeMapped, params);
         if (results.size() > 1) {
-            throw ServiceException.of(HttpStatus.BAD_REQUEST,"MORE_THAN_ONE_RESULT");
+            throw ServiceException.of(HttpStatus.BAD_REQUEST, "MORE_THAN_ONE_RESULT");
         }
         return results.size() == 1 ? results.getFirst() : null;
     }
@@ -127,24 +115,51 @@ public class DBPool {
     private Map<String, Object> mapRowToMap(ResultSet rs) throws SQLException {
         Map<String, Object> map = new HashMap<>();
         ResultSetMetaData metaData = rs.getMetaData();
-        ObjectMapper objectMapper = new ObjectMapper();
 
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
             String columnName = metaData.getColumnLabel(i);
             Object value = rs.getObject(i);
 
-            if (value instanceof PGobject && "jsonb".equals(((PGobject) value).getType())) {
+            if (value instanceof PGobject pgObj && "jsonb".equals(pgObj.getType())) {
                 try {
-                    value = objectMapper.readValue(((PGobject) value).getValue(), Map.class);
+                    value = mapper.mapTo(pgObj.getValue(), Map.class);
                 } catch (Exception e) {
                     throw new SQLException("Failed to parse JSONB column " + columnName, e);
                 }
             }
-            map.put(columnName, value);
+
+            if (value instanceof String str) {
+                if (str.matches("\\d{4}-\\d{2}-\\d{2}T.*[+-]\\d{2}:\\d{2}")) {
+                    try {
+                        value = OffsetDateTime.parse(str, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                                .toLocalDateTime();
+                    } catch (Exception ignore) {
+                        // nếu parse fail thì để nguyên string
+                    }
+                }
+            }
+
+            // convert snake_case -> camelCase
+            String camelName = toCamelCase(columnName);
+            map.put(camelName, value);
         }
         return map;
     }
 
+
+    private String toCamelCase(String snake) {
+        StringBuilder sb = new StringBuilder();
+        boolean upperNext = false;
+        for (char c : snake.toCharArray()) {
+            if (c == '_') {
+                upperNext = true;
+            } else {
+                sb.append(upperNext ? Character.toUpperCase(c) : c);
+                upperNext = false;
+            }
+        }
+        return sb.toString();
+    }
 
     protected String applyPaging(String sql) {
         PagingInfo paging = pagingContext.get();
@@ -169,4 +184,17 @@ public class DBPool {
                 " OFFSET " + paging.getOffset();
     }
 
+    private String getCallerInfo() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        for (int i = 2; i < stackTrace.length; i++) {
+            StackTraceElement element = stackTrace[i];
+            String className = element.getClassName();
+            if (!className.equals(this.getClass().getName()) && !className.startsWith("java.")) {
+                String fileName = element.getFileName(); // vd: Service.java
+                int lineNumber = element.getLineNumber();
+                return className + "." + element.getMethodName() + "(" + fileName + ":" + lineNumber + ")";
+            }
+        }
+        return "Unknown Source";
+    }
 }
