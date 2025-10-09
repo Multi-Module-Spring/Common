@@ -327,10 +327,12 @@ public class SQLBuilder {
                         if (spaceIndex > 0) {
                             String field = c.substring(0, spaceIndex);
                             String rest = c.substring(spaceIndex);
+                            field = toSnakeCase(field);
                             return (alias != null && !alias.isBlank())
                                     ? alias + "." + field + rest
                                     : field + rest;
                         }
+                        c = toSnakeCase(c);
                         return (alias != null && !alias.isBlank())
                                 ? alias + "." + c
                                 : c;
@@ -338,6 +340,7 @@ public class SQLBuilder {
                     .collect(Collectors.joining(", "));
         }
 
+        // Replace ? placeholders with $n parameters
         for (Object value : values) {
             int index = condition.indexOf("?");
             if (index >= 0) {
@@ -350,6 +353,16 @@ public class SQLBuilder {
         sql.append(condition).append(" ");
         return this;
     }
+
+    private static String toSnakeCase(String input) {
+        if (input == null || input.isBlank()) return input;
+        String result = input
+                .replaceAll("([a-z0-9])([A-Z])", "$1_$2")
+                .replaceAll("([A-Z])([A-Z][a-z])", "$1_$2")
+                .toLowerCase();
+        return result;
+    }
+
 
     private String getAlias(Class<?> clazz) {
         String alias = classToAlias.get(clazz);

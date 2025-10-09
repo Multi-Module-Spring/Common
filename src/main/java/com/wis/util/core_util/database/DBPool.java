@@ -86,6 +86,23 @@ public class DBPool {
         }
     }
 
+    public void executeNonQuery(String sql, Object... params) {
+        sql = convertPostgresStyle(sql, params.length);
+        try (Connection conn = databaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            setParameters(stmt, params);
+            stmt.execute();
+
+//        log.info("[SQL_EXECUTE_NONQUERY] SQL: {}", sql);
+//        log.info("[SQL_EXECUTE_NONQUERY] Params: {}", Arrays.toString(params));
+
+        } catch (SQLException e) {
+            throw ServiceException.withDetail("BAD_REQUEST", e.getMessage(), null);
+        }
+    }
+
+
     public <T> T executeQueryUnique(String sql, Class<T> clazzTobeMapped, Object... params) {
         List<T> results = executeQuery(sql, clazzTobeMapped, params);
         if (results.size() > 1) {
