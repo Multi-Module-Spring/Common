@@ -8,7 +8,7 @@ import java.util.Objects;
 @Getter
 @AllArgsConstructor
 public enum Country {
-    DEFAULT("NO_COUNTRY",0),
+    UNKNOWN("NO_COUNTRY",0),
     US("United States", 1),
     VN("Vietnam", 2),
     JP("Japan", 3);

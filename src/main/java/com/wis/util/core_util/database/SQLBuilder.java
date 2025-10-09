@@ -467,25 +467,58 @@ public class SQLBuilder {
         buildSelectIfNeeded();
 
         StringBuilder finalSql = new StringBuilder();
-
-        String joins = String.join(" ", joinClauses);
+        String joins = String.join(" ", joinClauses).trim();
         String body = sql.toString().trim().replaceAll("\\s+", " ");
 
-        int whereIndex = body.indexOf("WHERE");
-
-        if (whereIndex > -1) {
-            String fromPart = body.substring(0, whereIndex).trim();
-            String wherePart = body.substring(whereIndex).trim();
-            finalSql.append(fromPart).append(" ");
-            if (!joins.isBlank()) finalSql.append(joins).append(" ");
-            finalSql.append(wherePart);
-        } else {
-            finalSql.append(body);
-            if (!joins.isBlank()) finalSql.append(" ").append(joins);
+        int fromIndex = body.indexOf("FROM");
+        if (fromIndex == -1) {
+            // Nếu chưa có FROM thì trả về nguyên SELECT + JOIN (nếu có)
+            return body + (joins.isEmpty() ? "" : " " + joins);
         }
 
-        return finalSql.toString().trim();
+        String beforeFrom = body.substring(0, fromIndex).trim();
+        String afterFrom = body.substring(fromIndex).trim();
+
+        if (!joins.isEmpty()) {
+            int firstClauseEnd = findNextClause(afterFrom);
+            String fromPart = firstClauseEnd > 0
+                    ? afterFrom.substring(0, firstClauseEnd).trim()
+                    : afterFrom.trim();
+            String restPart = firstClauseEnd > 0
+                    ? afterFrom.substring(firstClauseEnd).trim()
+                    : "";
+
+            finalSql.append(beforeFrom)
+                    .append(" ")
+                    .append(fromPart)
+                    .append(" ")
+                    .append(joins)
+                    .append(" ");
+
+            if (!restPart.isEmpty()) {
+                finalSql.append(restPart).append(" ");
+            }
+        } else {
+            finalSql.append(body);
+        }
+
+        return finalSql.toString().trim().replaceAll("\\s+", " ");
     }
+
+
+    private int findNextClause(String afterFrom) {
+        List<String> keywords = Arrays.asList("WHERE ", "GROUP BY", "ORDER BY", "LIMIT ", "OFFSET ");
+        int minIndex = afterFrom.length();
+        for (String keyword : keywords) {
+            int idx = afterFrom.toUpperCase().indexOf(keyword);
+            if (idx > 0 && idx < minIndex) {
+                minIndex = idx;
+            }
+        }
+        return (minIndex == afterFrom.length()) ? -1 : minIndex;
+    }
+
+
 
     private void buildSelectIfNeeded() {
         if (!selectFields.isEmpty() && !sql.toString().contains("SELECT")) {
