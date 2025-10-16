@@ -1,10 +1,10 @@
 package com.wis.common.util.message.impl;
 
 import com.wis.common.enums.Language;
-import com.wis.common.exception.ServiceException;
 import com.wis.common.util.core_util.language.LanguageUtil;
 import com.wis.common.util.message.MessageUtil;
 import com.wis.i18n.TranslateCommon;
+import com.wis.i18n.exception.TranslateException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -195,7 +195,8 @@ public class MessageUtilImpl implements MessageUtil {
 
         } catch (Exception e) {
             log.error("Error import file i18n: {}", filename, e);
-            throw ServiceException.of(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_IMPORT_ERROR.name(), List.of(filename));
+            throw new TranslateException(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_IMPORT_ERROR, List.of(filename)) {
+            };
         }
     }
 

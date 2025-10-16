@@ -29,11 +29,11 @@ public class ServiceException extends RuntimeException {
     }
 
     public static ServiceException of(String stringKey) {
-        return new ServiceException(HttpStatus.BAD_REQUEST, stringKey, false, null, null);
+        return of(HttpStatus.BAD_REQUEST, stringKey);
     }
 
     public static ServiceException of(HttpStatus httpStatus, String stringKey) {
-        return new ServiceException(httpStatus, stringKey, false, null, null);
+        return of(httpStatus, stringKey, null);
     }
 
     public static ServiceException of(HttpStatus httpStatus, String stringKey, List<Object> args) {
@@ -42,7 +42,7 @@ public class ServiceException extends RuntimeException {
 
 
     public static ServiceException withDetail(String stringKey, String detail, List<Object> args) {
-        return new ServiceException(HttpStatus.BAD_REQUEST, stringKey, true, detail, args);
+        return withDetail(HttpStatus.BAD_REQUEST, stringKey, detail, args);
     }
 
     public static ServiceException withDetail(HttpStatus httpStatus, String stringKey, String detail, List<Object> args) {

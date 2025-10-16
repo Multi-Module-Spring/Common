@@ -112,6 +112,22 @@
                             </environmentVariables>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>generate-translate-exception</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>python</executable>
+                            <arguments>
+                                <argument>${project.basedir}/src/main/resources/generate_translate_exceptions.py</argument>
+                            </arguments>
+                            <environmentVariables>
+                                <PYTHONIOENCODING>utf-8</PYTHONIOENCODING>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
