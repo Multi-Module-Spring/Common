@@ -2,6 +2,7 @@ package com.wis.common.common_api;
 
 import com.wis.common.exception.ServiceException;
 import com.wis.common.util.message.MessageUtil;
+import com.wis.i18n.TranslateCommon;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -25,8 +26,8 @@ public class I18nController {
             messageUtil.importExcel(file.getInputStream(), file.getOriginalFilename());
             return ResponseEntity.ok("Import thành công file: " + file.getOriginalFilename());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Import thất bại: " + e.getMessage());
+            throw ServiceException.of(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_IMPORT_ERROR.name(), List.of(e.getMessage()));
+
         }
     }
 
@@ -41,7 +42,7 @@ public class I18nController {
             workbook.write(response.getOutputStream());
             workbook.close();
         } catch (Exception e) {
-            throw ServiceException.of(HttpStatus.INTERNAL_SERVER_ERROR, "I18N_EXPORT_ERROR", List.of(e.getMessage()));
+            throw ServiceException.of(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_EXPORT_ERROR.name(), List.of(e.getMessage()));
         }
     }
 }
