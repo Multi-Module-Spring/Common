@@ -58,7 +58,7 @@ def main():
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write(f"package {PACKAGE_NAME};\n\n")
-        f.write("import java.util.Map;\nimport java.util.concurrent.ConcurrentHashMap;\nimport lombok.Getter;\nimport lombok.AllArgsConstructor;\nimport lombok.ToString;")
+        f.write("import java.util.Map;\nimport java.util.concurrent.ConcurrentHashMap;\nimport lombok.Getter;\nimport lombok.AllArgsConstructor;\nimport lombok.ToString;\n\n")
         f.write("@Getter\n")
         f.write("@AllArgsConstructor\n")
         f.write("@ToString\n")
