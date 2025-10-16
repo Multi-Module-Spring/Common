@@ -9,8 +9,8 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>CoreCommon</artifactId>
-    <name>CoreCommon</name>
+    <artifactId>Common</artifactId>
+    <name>Common</name>
     <packaging>jar</packaging>
 
     <dependencies>
