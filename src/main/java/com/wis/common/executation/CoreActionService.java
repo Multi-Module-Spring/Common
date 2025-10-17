@@ -5,6 +5,8 @@ import com.wis.common.util.core_util.CoreRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 @Slf4j
 public abstract class CoreActionService<REQUEST, ACTION_MODEL, MODEL> extends CoreRepository implements ActionService<REQUEST, MODEL> {
@@ -18,13 +20,7 @@ public abstract class CoreActionService<REQUEST, ACTION_MODEL, MODEL> extends Co
     protected MODEL execute(Payload payload, LocalDateTime now, REQUEST request) {
         ACTION_MODEL actionModel = verify(payload, request, now);
 
-        beginValues();
-        beginValuesNoSQLBuilder();
-
         MODEL response = innerExecute(payload, actionModel, now);
-
-        endValues();
-        endValuesNoSQLBuilder();
 
         i18nResolver.resolveI18nFields(response);
         return response;

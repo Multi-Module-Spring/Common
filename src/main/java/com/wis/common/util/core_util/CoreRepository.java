@@ -4,7 +4,9 @@ import com.wis.common.util.core_util.database.DBPool;
 import com.wis.common.util.core_util.paging.PagingContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.ApplicationScope;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,50 +15,44 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@ApplicationScope
 public abstract class CoreRepository extends CoreBean {
 
     @Autowired
     protected DBPool dbPool;
 
-    @Autowired
-    protected PagingContext pagingContext;
-
-    //Map<String, Object>
-    private final ThreadLocal<Map<String, Object>> threadLocalValues =
-            ThreadLocal.withInitial(HashMap::new);
-
-
-    protected void beginValues() {
-        threadLocalValues.get().clear();
+    public CoreRepository() {
+        resetParams();
     }
 
-
-    protected Map<String, Object> values() {
-        return threadLocalValues.get();
-    }
-
-
-    protected void endValues() {
-        beginValues();
-    }
-    //List<Object>
-    private final ThreadLocal<List<Object>> threadLocalValuesListObject =
+    private static final ThreadLocal<List<Object>> threadLocalParams =
             ThreadLocal.withInitial(ArrayList::new);
 
+    private static final ThreadLocal<Map<String, Object>> threadLocalMapParams =
+            ThreadLocal.withInitial(HashMap::new);
 
-    protected void beginValuesNoSQLBuilder() {
-        threadLocalValuesListObject.get().clear();
+    public List<Object> getParams() {
+        return threadLocalParams.get();
+    }
+
+    public Map<String, Object> getMapParams() {
+        return threadLocalMapParams.get();
+    }
+
+    public void resetParams() {
+        threadLocalParams.remove();
+        threadLocalMapParams.remove();
+
+        threadLocalParams.set(new ArrayList<>());
+        threadLocalMapParams.set(new HashMap<>());
+
+        this.params = threadLocalParams.get();
+        this.mapParams = threadLocalMapParams.get();
     }
 
 
-    protected List<Object> valuesN() {
-        return threadLocalValuesListObject.get();
-    }
-
-
-    protected void endValuesNoSQLBuilder() {
-        beginValuesNoSQLBuilder();
-    }
-
-
+    public List<Object> params = getParams();
+    public Map<String, Object> mapParams = getMapParams();
 }
+
+
