@@ -1,7 +1,8 @@
 package com.wis.main.controller;
 
+import com.wis.main.controller.model.SupportedLanguageModel;
 import com.wis.main.enums.Language;
-import com.wis.main.util.message.MessageUtil;
+import com.wis.main.util.core_util.CoreAPI;
 import com.wis.i18n.TranslateCommon;
 import com.wis.i18n.exception.TranslateCommonException;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,13 +16,14 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/i18n")
 @RequiredArgsConstructor
-public class I18nController {
-
-    private final MessageUtil messageUtil;
+public class I18nController extends CoreAPI {
 
     @GetMapping("")
-    public ResponseEntity<String> getLanguage() {
-            return ResponseEntity.ok("List language: " + Language.supportedCodes());
+    public ResponseEntity<SupportedLanguageModel> getLanguage() {
+            return ResponseEntity.ok(SupportedLanguageModel.builder()
+                            .supportedLanguages(Language.supportedCodes())
+                    .build()
+            );
     }
 
     @PostMapping("/import")
