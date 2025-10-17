@@ -22,6 +22,10 @@ def main():
         f.write("import java.util.List;\n\n")
         f.write("public class TranslateCommonException extends ServiceException {\n\n")
 
+        f.write("    public TranslateCommonException(HttpStatus status, String translateKey, List<Object> args) {\n")
+        f.write("        super(status, translateKey, false, null, args);\n")
+        f.write("    }\n\n")
+
         f.write("    public TranslateCommonException(HttpStatus status, TranslateCommon translate) {\n")
         f.write("        super(status, translate.name(), false, null, null);\n")
         f.write("    }\n\n")
