@@ -1,6 +1,8 @@
 package com.wis.common.enums;
 
 import com.wis.common.exception.ServiceException;
+import com.wis.i18n.TranslateCommon;
+import com.wis.i18n.exception.TranslateCommonException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
@@ -37,7 +39,7 @@ public enum Language {
                 .filter(e -> e.language.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() ->
-                        ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED"));
+                        new TranslateCommonException(HttpStatus.BAD_REQUEST, TranslateCommon.LANGUAGE_CODE_NOT_SUPPORTED));
     }
 
     public static Language fromCountryCode(String code) {
@@ -48,7 +50,7 @@ public enum Language {
                 .filter(e -> e.country.equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() ->
-                        ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED"));
+                        new TranslateCommonException(HttpStatus.BAD_REQUEST, TranslateCommon.LANGUAGE_CODE_NOT_SUPPORTED));
     }
 
     public static Language fromCode(String code) {
@@ -60,7 +62,7 @@ public enum Language {
                 .filter(e -> (e.language + "-" + e.country).equalsIgnoreCase(normalized))
                 .findFirst()
                 .orElseThrow(() ->
-                        ServiceException.of(HttpStatus.BAD_REQUEST, "LANGUAGE_CODE_NOT_SUPPORTED"));
+                        new TranslateCommonException(HttpStatus.BAD_REQUEST, TranslateCommon.LANGUAGE_CODE_NOT_SUPPORTED));
     }
 
     public static List<String> supportedCodes() {
@@ -79,6 +81,6 @@ public enum Language {
     }
 
     public String toCode() {
-        return language + "-" + country;
+        return language + "_" + country;
     }
 }

@@ -11,15 +11,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class CustomLanguageResolver {
 
     public Language resolveLanguage(HttpServletRequest request) {
-        try {
             String headerLang = extractAcceptLanguage(request);
             if (headerLang == null || headerLang.isBlank()) {
                 return Language.getDefault();
             }
             return Language.fromCode(headerLang);
-        } catch (Exception e) {
-            return Language.getDefault();
-        }
     }
 
     public Language resolveLanguage() {

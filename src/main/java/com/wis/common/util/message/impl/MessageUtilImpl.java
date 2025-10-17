@@ -41,7 +41,7 @@ public class MessageUtilImpl implements MessageUtil {
     }
 
     public String getI18n(String key,String detail, List<Object> args) {
-       Language currentLang = languageUtil.from();
+       Language currentLang = key.equals(TranslateCommon.LANGUAGE_CODE_NOT_SUPPORTED.name()) ? Language.DEFAULT_LANG :  languageUtil.from();
         return getI18n(currentLang, key,detail, args);
     }
 

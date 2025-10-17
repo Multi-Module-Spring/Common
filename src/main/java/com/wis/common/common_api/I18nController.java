@@ -1,5 +1,6 @@
 package com.wis.common.common_api;
 
+import com.wis.common.enums.Language;
 import com.wis.common.exception.ServiceException;
 import com.wis.common.util.message.MessageUtil;
 import com.wis.i18n.TranslateCommon;
@@ -20,6 +21,11 @@ import java.util.List;
 public class I18nController {
 
     private final MessageUtil messageUtil;
+
+    @GetMapping("")
+    public ResponseEntity<String> getLanguage() {
+            return ResponseEntity.ok("List language: " + Language.supportedCodes());
+    }
 
     @PostMapping("/import")
     public ResponseEntity<String> importI18n(@RequestParam("file") MultipartFile file) {
