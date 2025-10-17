@@ -33,7 +33,7 @@ public class I18nController {
             messageUtil.importExcel(file.getInputStream(), file.getOriginalFilename());
             return ResponseEntity.ok("Import thành công file: " + file.getOriginalFilename());
         } catch (Exception e) {
-            throw new TranslateCommonException(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_IMPORT_ERROR, List.of(e.getMessage()));
+            throw new TranslateCommonException(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_IMPORT_ERROR, e.getMessage());
 
         }
     }
@@ -49,7 +49,7 @@ public class I18nController {
             workbook.write(response.getOutputStream());
             workbook.close();
         } catch (Exception e) {
-            throw new TranslateCommonException(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_EXPORT_ERROR, List.of(e.getMessage()));
+            throw new TranslateCommonException(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_EXPORT_ERROR, e.getMessage());
         }
     }
 }

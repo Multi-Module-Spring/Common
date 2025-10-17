@@ -91,7 +91,7 @@
                         <fileset>
                             <directory>${project.basedir}/src/main/java/com/wis/i18n/exception</directory>
                             <includes>
-                                <include>TranslateException.java</include>
+                                <include>TranslateCommonException.java</include>
                             </includes>
                         </fileset>
                     </filesets>

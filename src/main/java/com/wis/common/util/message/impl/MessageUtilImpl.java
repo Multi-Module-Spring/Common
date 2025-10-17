@@ -195,7 +195,7 @@ public class MessageUtilImpl implements MessageUtil {
 
         } catch (Exception e) {
             log.error("Error import file i18n: {}", filename, e);
-            throw new TranslateCommonException(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_IMPORT_ERROR, List.of(filename)) {
+            throw new TranslateCommonException(HttpStatus.INTERNAL_SERVER_ERROR, TranslateCommon.I18N_IMPORT_ERROR, filename) {
             };
         }
     }
