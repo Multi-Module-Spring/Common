@@ -1,6 +1,0 @@
-package com.wis.common.util.core_util.date;
-
-public interface DateTimePattern {
-    String YYYYMMDD = "yyyyMMdd";
-    String YYYYMMDDHHMISSFFF = "yyyyMMdd'T'HHmmssSSS+07:00";
-}
