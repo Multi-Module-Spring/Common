@@ -73,6 +73,11 @@
             <artifactId>poi-ooxml</artifactId>
             <version>5.4.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.20.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -104,43 +109,167 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.2.0</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${project.basedir}/src/main/java/com/wis/i18n</directory>
+                            <includes>
+                                <include>Translate.java</include>
+                                <include>KeyTranslate.java</include>
+                                <include>TranslateCommon.java</include>
+                                <include>KeyTranslateCommon.java</include>
+                            </includes>
+                        </fileset>
+                        <fileset>
+                            <directory>${project.basedir}/src/main/java/com/wis/i18n/exception</directory>
+                            <includes>
+                                <include>TranslateException.java</include>
+                                <include>TranslateCommonException.java</include>
+                            </includes>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
+            <!-- Step 1: Compile and run generators -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>generate-translate-enum</id>
+                        <id>compile-and-run-generator</id>
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>exec</goal>
+                            <goal>run</goal>
                         </goals>
                         <configuration>
-                            <executable>python</executable>
-                            <arguments>
-                                <argument>${project.basedir}/src/main/resources/generate_translate_enum.py</argument>
-                            </arguments>
-                            <environmentVariables>
-                                <PYTHONIOENCODING>utf-8</PYTHONIOENCODING>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate-translate-exception</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>python</executable>
-                            <arguments>
-                                <argument>${project.basedir}/src/main/resources/generate_translate_exceptions.py</argument>
-                            </arguments>
-                            <environmentVariables>
-                                <PYTHONIOENCODING>utf-8</PYTHONIOENCODING>
-                            </environmentVariables>
+                            <target>
+                                <!-- Create output directory -->
+                                <mkdir dir="${project.build.directory}/generator-classes"/>
+
+                                <!-- Compile both generators -->
+                                <echo message="Compiling I18n Generators..."/>
+                                <javac srcdir="${project.basedir}/src/main/java"
+                                       destdir="${project.build.directory}/generator-classes"
+                                       includeantruntime="false"
+                                       encoding="UTF-8"
+                                       source="21"
+                                       target="21">
+                                    <include name="**/generator/**/*.java"/>
+                                    <classpath>
+                                        <fileset dir="${settings.localRepository}/org/apache/poi">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/commons">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/xmlbeans">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/commons-codec">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/commons-io">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/logging">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/slf4j">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                    </classpath>
+                                </javac>
+
+                                <!-- Run I18nCodeGenerator -->
+                                <echo message="Running I18nCodeGenerator..."/>
+                                <java classname="com.wis.generator.I18nCommonCodeGenerator"
+                                      fork="true"
+                                      failonerror="true"
+                                      dir="${project.basedir}">
+                                    <classpath>
+                                        <pathelement path="${project.build.directory}/generator-classes"/>
+                                        <fileset dir="${settings.localRepository}/org/apache/poi">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/commons">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/xmlbeans">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/commons-codec">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/commons-io">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/com/zaxxer">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/logging">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/slf4j">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                    </classpath>
+                                </java>
+
+                                <!-- Run I18nCommonCodeGenerator -->
+                                <echo message="Running I18nCommonCodeGenerator..."/>
+                                <java classname="com.wis.generator.I18nCommonCodeGenerator"
+                                      fork="true"
+                                      failonerror="true"
+                                      dir="${project.basedir}">
+                                    <classpath>
+                                        <pathelement path="${project.build.directory}/generator-classes"/>
+                                        <fileset dir="${settings.localRepository}/org/apache/poi">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/commons">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/xmlbeans">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/commons-codec">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/commons-io">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/com/zaxxer">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/apache/logging">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                        <fileset dir="${settings.localRepository}/org/slf4j">
+                                            <include name="**/*.jar"/>
+                                        </fileset>
+                                    </classpath>
+                                </java>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.poi</groupId>
+                        <artifactId>poi-ooxml</artifactId>
+                        <version>5.4.1</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-api</artifactId>
+                        <version>2.20.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
