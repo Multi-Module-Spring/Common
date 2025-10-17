@@ -4,6 +4,8 @@ import com.wis.common.exception.ServiceException;
 import com.wis.common.model.core.PagingInfo;
 import com.wis.common.util.core_util.mapper.Mapper;
 import com.wis.common.util.core_util.paging.PagingContext;
+import com.wis.i18n.TranslateCommon;
+import com.wis.i18n.exception.TranslateCommonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PGobject;
@@ -39,7 +41,8 @@ public class DBPool {
             return stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw ServiceException.withDetail("BAD_REQUEST", e.getMessage(), null);
+            log.error(e.getMessage());
+            throw new TranslateCommonException(HttpStatus.BAD_REQUEST,TranslateCommon.BAD_REQUEST);
         }
     }
 
@@ -81,7 +84,8 @@ public class DBPool {
                     .map(mapper.mapTo(clazzTobeMapped))
                     .toList();
         } catch (SQLException e) {
-            throw ServiceException.withDetail("CONNECTION", e.getMessage(), null);
+            log.error(e.getMessage());
+            throw new TranslateCommonException(HttpStatus.BAD_REQUEST, TranslateCommon.CONNECTION);
         }
     }
 
@@ -105,7 +109,7 @@ public class DBPool {
     public <T> T executeQueryUnique(String sql, Class<T> clazzTobeMapped, Object... params) {
         List<T> results = executeQuery(sql, clazzTobeMapped, params);
         if (results.size() > 1) {
-            throw ServiceException.of(HttpStatus.BAD_REQUEST, "MORE_THAN_ONE_RESULT");
+            throw new TranslateCommonException(HttpStatus.BAD_REQUEST, TranslateCommon.MORE_THAN_ONE_RESULT);
         }
         return results.size() == 1 ? results.getFirst() : null;
     }
@@ -150,12 +154,10 @@ public class DBPool {
                         value = OffsetDateTime.parse(str, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                                 .toLocalDateTime();
                     } catch (Exception ignore) {
-                        // nếu parse fail thì để nguyên string
                     }
                 }
             }
 
-            // convert snake_case -> camelCase
             String camelName = toCamelCase(columnName);
             map.put(camelName, value);
         }
@@ -206,7 +208,7 @@ public class DBPool {
             StackTraceElement element = stackTrace[i];
             String className = element.getClassName();
             if (!className.equals(this.getClass().getName()) && !className.startsWith("java.")) {
-                String fileName = element.getFileName(); // vd: Service.java
+                String fileName = element.getFileName();
                 int lineNumber = element.getLineNumber();
                 return className + "." + element.getMethodName() + "(" + fileName + ":" + lineNumber + ")";
             }

@@ -85,6 +85,12 @@
                         <fileset>
                             <directory>${project.basedir}/src/main/java/com/wis/i18n</directory>
                             <includes>
+                                <include>keyTranslateCommon.java</include>
+                            </includes>
+                        </fileset>
+                        <fileset>
+                            <directory>${project.basedir}/src/main/java/com/wis/i18n</directory>
+                            <includes>
                                 <include>TranslateCommon.java</include>
                             </includes>
                         </fileset>
