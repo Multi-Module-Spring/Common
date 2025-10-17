@@ -193,27 +193,22 @@ public class I18nCommonCodeGenerator {
             writer.write("import java.util.Arrays;\n\n");
             writer.write("public class TranslateCommonException extends ServiceException {\n\n");
 
-            // Constructor với HttpStatus, String key, và args
             writer.write("    public TranslateCommonException(HttpStatus status, String translateKey, Object... args) {\n");
             writer.write("        super(status, translateKey, false, null, Arrays.stream(args).toList());\n");
             writer.write("    }\n\n");
 
-            // Constructor với HttpStatus và TranslateCommon (no args)
             writer.write("    public TranslateCommonException(HttpStatus status, TranslateCommon translate) {\n");
             writer.write("        super(status, translate.name(), false, null, List.of());\n");
             writer.write("    }\n\n");
 
-            // Constructor với HttpStatus, TranslateCommon và args
             writer.write("    public TranslateCommonException(HttpStatus status, TranslateCommon translate, Object... args) {\n");
             writer.write("        super(status, translate.name(), true, null, Arrays.stream(args).toList());\n");
             writer.write("    }\n\n");
 
-            // Constructor mặc định với TranslateCommon (no args)
             writer.write("    public TranslateCommonException(TranslateCommon translate) {\n");
             writer.write("        super(HttpStatus.BAD_REQUEST, translate.name(), false, null, List.of());\n");
             writer.write("    }\n\n");
 
-            // Constructor mặc định với TranslateCommon và args
             writer.write("    public TranslateCommonException(TranslateCommon translate, Object... args) {\n");
             writer.write("        super(HttpStatus.BAD_REQUEST, translate.name(), true, null, Arrays.stream(args).toList());\n");
             writer.write("    }\n");
