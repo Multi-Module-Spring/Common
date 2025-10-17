@@ -9,7 +9,7 @@ PACKAGE_NAME = "com.wis.i18n.exception"
 
 def main():
     if not os.path.exists(TRANSLATE_FILE):
-        print(f"Không tìm thấy file enum: {TRANSLATE_FILE}")
+        print(f"Not found file enum: {TRANSLATE_FILE}")
         return
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
@@ -45,8 +45,8 @@ def main():
 
         f.write("}\n")
 
-    print(f"Đã sinh file: {OUTPUT_PATH}")
-    print("⚙️ TranslateCommonException đã sẵn sàng để sử dụng cùng ServiceException.")
+    print(f"-> Created file: {OUTPUT_PATH}")
+    print("TranslateCommonException ready to use.")
 
 
 if __name__ == "__main__":

@@ -14,7 +14,6 @@ PACKAGE_NAME = "com.wis.i18n"
 
 
 def to_enum_name(key: str) -> str:
-    """Chuyển key thành tên enum hợp lệ"""
     s = re.sub(r"[^A-Za-z0-9]", "_", key)
     s = re.sub(r"_+", "_", s).upper().strip("_")
     if not s:
@@ -25,28 +24,27 @@ def to_enum_name(key: str) -> str:
 
 
 def main():
-    entries = {}  # key -> vi_VN
+    entries = {}
     total_files = 0
 
     for i18n_dir in I18N_PATHS:
         if not os.path.isdir(i18n_dir):
-            print(f"Không tìm thấy thư mục: {i18n_dir}")
+            print(f"Directory not found: {i18n_dir}")
             continue
 
-        print(f"Đang quét thư mục: {i18n_dir}")
+        print(f"Scanning directory: {i18n_dir}")
         for filename in os.listdir(i18n_dir):
             if not filename.endswith(".xlsx") or filename.startswith("~$"):
                 continue
 
             total_files += 1
             full_path = os.path.join(i18n_dir, filename)
-            print(f"Đọc file: {full_path}")
+            print(f"Reading file: {full_path}")
 
             try:
                 wb = openpyxl.load_workbook(full_path)
                 sheet = wb.active
 
-                # Tìm vị trí cột key và vi_VN
                 headers = [str(c.value).strip() if c.value else "" for c in next(sheet.iter_rows(min_row=1, max_row=1))]
                 key_idx = None
                 vi_idx = None
@@ -58,10 +56,10 @@ def main():
                         vi_idx = i
 
                 if key_idx is None:
-                    print(f"⚠️ Không tìm thấy cột 'key' trong {filename}")
+                    print(f"Không tìm thấy cột 'key' trong {filename}")
                     continue
                 if vi_idx is None:
-                    print(f"⚠️ Không tìm thấy cột 'vi_VN' trong {filename}")
+                    print(f"Không tìm thấy cột 'vi_VN' trong {filename}")
                     continue
 
                 for row in sheet.iter_rows(min_row=2, values_only=True):
@@ -77,7 +75,7 @@ def main():
                 print(f"Lỗi khi đọc {filename}: {e}")
 
     if not entries:
-        print("Không tìm thấy key nào trong các file i18n")
+        print("-> keys not found in file i18n")
         return
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
@@ -99,8 +97,8 @@ def main():
         f.write("\n    private final String description;\n")
         f.write("}\n")
 
-    print(f"\n✅ Đã sinh file: {OUTPUT_PATH}")
-    print(f"🔢 Tổng số key: {len(entries)} (từ {total_files} file Excel)")
+    print(f"\n-> Created file: {OUTPUT_PATH}")
+    print(f"-> Total key: {len(entries)} (từ {total_files} file Excel)")
 
 
 if __name__ == "__main__":
