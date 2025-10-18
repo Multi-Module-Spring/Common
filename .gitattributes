@@ -1,0 +1,9 @@
+# Excel Configuration for SourceTree
+*.xlsx diff=excel merge=excel
+*.xlsm diff=excel merge=excel
+*.xls diff=excel merge=excel
+
+# Other binary files
+*.png binary
+*.jpg binary
+*.pdf binary
