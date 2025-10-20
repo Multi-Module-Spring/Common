@@ -1,7 +1,10 @@
 package com.wis.main.enums;
 
+import com.wis.i18n.TranslateCommon;
+import com.wis.i18n.exception.TranslateCommonException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 import java.util.Objects;
 
@@ -22,6 +25,6 @@ public enum Country {
                 return country.getName();
             }
         }
-        throw new IllegalArgumentException("Unknown country code: " + code);
+        throw new TranslateCommonException(HttpStatus.NOT_FOUND, TranslateCommon.NOT_FOUND_COUNTRY);
     }
 }

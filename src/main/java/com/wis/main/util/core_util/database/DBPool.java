@@ -142,7 +142,16 @@ public class DBPool {
 
             if (value instanceof PGobject pgObj && "jsonb".equals(pgObj.getType())) {
                 try {
-                    value = mapper.mapTo(pgObj.getValue(), Map.class);
+                    String json = pgObj.getValue();
+
+                    if (json != null && json.trim().startsWith("[")) {
+                        value = mapper.read(json, List.class);
+                    } else if (json != null && json.trim().startsWith("{")) {
+                        value = mapper.read(json, Map.class);
+                    } else {
+                        value = json;
+                    }
+
                 } catch (Exception e) {
                     throw new SQLException("Failed to parse JSONB column " + columnName, e);
                 }
