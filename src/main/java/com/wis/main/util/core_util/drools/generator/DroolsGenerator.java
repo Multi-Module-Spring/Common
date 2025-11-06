@@ -1,9 +1,10 @@
 package com.wis.main.util.core_util.drools.generator;
 
 import com.wis.main.util.core_util.drools.annotation.DroolRuleConfig;
+import com.wis.main.util.core_util.string.StringUtil;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
@@ -18,7 +19,7 @@ public class DroolsGenerator<T> {
 
     public void generateFile(String subFix, List<T> configs) throws IOException {
         if (configs == null || configs.isEmpty()) {
-            System.out.println("[Drools] No data to generate " + subFix);
+            System.out.println("[Drools] ⚠️ No data to generate " + subFix);
             return;
         }
 
@@ -27,6 +28,7 @@ public class DroolsGenerator<T> {
         if (meta == null) {
             throw new IllegalStateException("[Drools] Missing @DroolRuleConfig on class " + clazz.getSimpleName());
         }
+
         subFix = meta.packageName() + "_" + subFix + ".drl";
 
         StringBuilder sb = new StringBuilder();
@@ -35,8 +37,8 @@ public class DroolsGenerator<T> {
 
         int index = 0;
         for (T config : configs) {
-            String rule = buildRule(meta, config, index++);
-            sb.append(rule).append("\n\n");
+            String ruleContent = buildRule(meta, config, index++);
+            sb.append(ruleContent).append("\n\n");
         }
 
         Files.createDirectories(baseDir);
@@ -47,20 +49,75 @@ public class DroolsGenerator<T> {
     }
 
     private String buildRule(DroolRuleConfig meta, Object obj, int index) {
-        String when = replacePlaceholders(meta.when(), obj);
-        String then = replacePlaceholders(meta.then(), obj);
+        try {
+            if (meta.ruleSource() != void.class) {
+                Class<?> src = meta.ruleSource();
+                Method method = null;
 
-        String idPart = getSafeIdentifier(obj, meta.packageName());
-        String ruleName = meta.ruleNamePrefix() + idPart + "_" + index;
+                for (Method m : src.getDeclaredMethods()) {
+                    if (m.getName().equals("buildRule")) {
+                        method = m;
+                        break;
+                    }
+                }
 
-        return String.format("""
-        rule "%s"
-            when
-                %s
-            then
-                %s
-        end
-        """, ruleName, when, then);
+                if (method == null) {
+                    throw new IllegalStateException("[Drools] Không tìm thấy buildRule trong " + src.getSimpleName());
+                }
+
+                Object ruleObj;
+                if (method.getParameterCount() == 1) {
+                    ruleObj = method.invoke(null, obj);
+                } else {
+                    ruleObj = method.invoke(null);
+                }
+
+                if (!(ruleObj instanceof DroolRule<?, ?> rule)) {
+                    throw new IllegalStateException("[Drools] buildRule() phải trả về DroolRule<?, ?>");
+                }
+
+                String full = rule.build();
+                int startIndex = full.indexOf("rule ");
+                if (startIndex == -1) {
+                    throw new RuntimeException("[Drools] Không tìm thấy rule trong output!");
+                }
+                return full.substring(startIndex).trim();
+            }
+
+            return StringUtil.BLANK;
+
+        } catch (Exception e) {
+            throw new RuntimeException("[Drools] 🔥 Error building rule: " + e.getMessage(), e);
+        }
+    }
+
+
+    private static Method getMethod(DroolRuleConfig meta) {
+        Class<?> src = meta.ruleSource();
+        Method method = null;
+
+        for (Method m : src.getDeclaredMethods()) {
+            if (m.getName().equals("buildRule")) {
+                method = m;
+                break;
+            }
+        }
+
+        if (method == null) {
+            throw new IllegalStateException("[Drools] Không tìm thấy hàm buildRule trong " + src.getSimpleName());
+        }
+        return method;
+    }
+
+    private String getRouteId(Object obj) {
+        try {
+            Field f = obj.getClass().getDeclaredField("routeLineId");
+            f.setAccessible(true);
+            Object val = f.get(obj);
+            return val == null ? "UNKNOWN" : val.toString();
+        } catch (Exception e) {
+            return "UNKNOWN";
+        }
     }
 
     private String getSafeIdentifier(Object obj, String declaredName) {
@@ -71,7 +128,8 @@ public class DroolsGenerator<T> {
             if (val != null) {
                 return val.toString().replaceAll("[^A-Za-z0-9]", "_");
             }
-        } catch (NoSuchFieldException | IllegalAccessException ignored) {}
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        }
         return String.valueOf(obj.hashCode());
     }
 
@@ -82,7 +140,8 @@ public class DroolsGenerator<T> {
                 Object val = field.get(obj);
                 String placeholder = "{" + field.getName() + "}";
                 template = template.replace(placeholder, val == null ? "null" : val.toString());
-            } catch (IllegalAccessException ignored) {}
+            } catch (IllegalAccessException ignored) {
+            }
         }
         return template;
     }

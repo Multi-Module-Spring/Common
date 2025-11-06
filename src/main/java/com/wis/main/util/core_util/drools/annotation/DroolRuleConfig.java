@@ -8,6 +8,5 @@ public @interface DroolRuleConfig {
     String packageName() default "rule";
     String imports() default "";
     String ruleNamePrefix() default "";
-    String when();
-    String then();
+    Class<?> ruleSource();
 }
