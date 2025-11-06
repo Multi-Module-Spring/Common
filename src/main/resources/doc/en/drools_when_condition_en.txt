@@ -1,0 +1,134 @@
+====================================
+Drools 'when' Condition Reference
+====================================
+
+The `when` section defines the condition under which a rule is triggered.
+Drools uses pattern matching on inserted facts (objects) to decide which rules fire.
+
+Basic structure:
+    when
+        <pattern_1>
+        <pattern_2>
+        ...
+    then
+        <actions>
+    end
+
+
+1. PATTERN MATCHING
+-------------------
+A pattern binds an object in working memory to a variable.
+
+Syntax:
+    <variable> : <Type>( <field constraint>, ... )
+
+Example:
+    $order : Order(status == "NEW", amount > 100)
+
+Meaning:
+    - `$order` is a variable reference bound to a fact of type `Order`
+    - Constraints inside parentheses must all be true
+
+You can omit the variable if you don't need to reference it:
+    Order(status == "NEW")
+
+Multiple patterns are AND-ed by default (all must match).
+
+
+2. FIELD CONSTRAINTS
+--------------------
+Common operators:
+    ==, !=, >, >=, <, <=
+    contains, not contains, matches, not matches, memberOf, not memberOf
+
+Example:
+    $cust : Customer(age > 18, name matches "A.*")
+
+String operators:
+    matches      → regex match
+    contains     → substring check
+    memberOf     → element in collection
+
+
+3. EVAL EXPRESSIONS
+-------------------
+The `eval()` keyword allows embedding raw Java logic inside the condition.
+This is used when:
+- You need to call a method
+- Or perform an operation not expressible in pattern syntax
+
+Syntax:
+    eval(<Java expression>)
+
+Example:
+    eval($req.getPostcode() >= 10000 && $req.getPostcode() <= 19999)
+
+Rules inside `eval()`:
+- Must return a boolean
+- Can reference bound variables (`$req`, `$result`, etc.)
+- Slower than native pattern matching, but more flexible
+- Best used for method calls or dynamic ranges
+
+Best practice:
+✅ Use pattern constraints where possible (faster)
+❗ Use `eval()` only when pattern constraints can’t express logic.
+
+
+4. COMBINING CONDITIONS
+------------------------
+Drools supports logical connectors inside patterns and between patterns.
+
+Examples:
+    $req : RouteRequest(postcode >= 10000 && postcode <= 19999)
+    or
+    eval($req.getPostcode() >= 10000 && $req.getPostcode() <= 19999)
+
+AND / OR across patterns:
+    when
+        $req : RouteRequest()
+        ( $req.postcode < 5000 || $req.postcode > 9000 )
+        $result : RouteResult()
+
+Grouping:
+    Use parentheses ( ) for complex logic
+
+
+5. RELATIONAL MATCHING BETWEEN FACTS
+------------------------------------
+You can relate two objects in the condition.
+
+Example:
+    $req : RouteRequest()
+    $res : RouteResult(boxCode == null, routeLineId == $req.routeLineId)
+
+
+6. USING BIND VARIABLES
+------------------------
+Bind a field value into a variable for reuse:
+    $req : RouteRequest($code : postcode)
+    eval($code >= 10000 && $code <= 19999)
+
+
+7. NEGATION
+------------
+Negate patterns using `not` keyword:
+    not RouteResult(boxCode != null)
+
+Meaning: only match if *no* RouteResult with boxCode exists.
+
+
+8. EXAMPLE SUMMARY
+-------------------
+when
+    $req : RouteRequest()
+    eval($req.getPostcode() >= {startPostcode} && $req.getPostcode() <= {endPostcode})
+    $result : RouteResult(boxCode == null)
+then
+    $result.setBoxCode("{boxCode}");
+    update($result);
+
+Explanation:
+- `$req` → RouteRequest fact
+- `eval(...)` → range check using Java logic
+- `$result` → RouteResult fact with boxCode not yet set
+- `update($result)` → notify Drools of change to re-evaluate other rules

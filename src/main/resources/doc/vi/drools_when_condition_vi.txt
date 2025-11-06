@@ -1,0 +1,130 @@
+====================================
+Tài liệu tham khảo phần 'when' trong Drools
+====================================
+
+Phần `when` định nghĩa điều kiện để rule được kích hoạt.
+Drools dựa vào việc so khớp các object (fact) trong KieSession để quyết định rule nào chạy.
+
+Cấu trúc cơ bản:
+    when
+        <mẫu_1>
+        <mẫu_2>
+        ...
+    then
+        <hành_động>
+    end
+
+
+1. MẪU (PATTERN MATCHING)
+--------------------------
+Mỗi mẫu định nghĩa một object trong bộ nhớ làm việc và ràng buộc nó với biến.
+
+Cú pháp:
+    <biến> : <Kiểu>( <ràng_buộc_field>, ... )
+
+Ví dụ:
+    $order : Order(status == "NEW", amount > 100)
+
+Ý nghĩa:
+    - `$order` là biến tham chiếu đến object kiểu `Order`
+    - Các điều kiện trong ngoặc phải đúng hết
+
+Nếu không cần dùng lại biến, có thể bỏ tên:
+    Order(status == "NEW")
+
+Các mẫu trong `when` mặc định liên kết với nhau bằng AND.
+
+
+2. RÀNG BUỘC FIELD
+-------------------
+Các toán tử phổ biến:
+    ==, !=, >, >=, <, <=
+    contains, not contains, matches, not matches, memberOf, not memberOf
+
+Ví dụ:
+    $cust : Customer(age > 18, name matches "A.*")
+
+Toán tử đặc biệt:
+- matches: khớp regex
+- contains: kiểm tra chuỗi con
+- memberOf: phần tử nằm trong tập
+
+
+3. SỬ DỤNG `eval()`
+--------------------
+`eval()` cho phép nhúng trực tiếp biểu thức Java vào trong điều kiện.
+Dùng khi:
+- Cần gọi method
+- Hoặc logic không thể viết trong cú pháp ràng buộc thông thường
+
+Cú pháp:
+    eval(<biểu_thức_Java_trả_về_boolean>)
+
+Ví dụ:
+    eval($req.getPostcode() >= 10000 && $req.getPostcode() <= 19999)
+
+Lưu ý:
+- Biểu thức phải trả về boolean
+- Có thể truy cập biến đã bind (vd `$req`, `$res`)
+- Chậm hơn pattern thông thường, nhưng linh hoạt hơn
+- Nên dùng cho các logic phức tạp hoặc phương thức Java
+
+Khuyến nghị:
+✅ Dùng pattern constraint khi có thể
+⚠️ Chỉ dùng eval khi cần xử lý đặc biệt.
+
+
+4. KẾT HỢP ĐIỀU KIỆN
+---------------------
+Drools hỗ trợ kết hợp logic AND, OR, dấu ngoặc.
+
+Ví dụ:
+    $req : RouteRequest(postcode >= 10000 && postcode <= 19999)
+hoặc:
+    eval($req.getPostcode() >= 10000 && $req.getPostcode() <= 19999)
+
+Có thể viết điều kiện phức tạp:
+    when
+        $req : RouteRequest()
+        ( $req.postcode < 5000 || $req.postcode > 9000 )
+
+
+5. LIÊN KẾT GIỮA CÁC OBJECT
+-----------------------------
+Có thể so sánh giá trị giữa hai fact.
+
+Ví dụ:
+    $req : RouteRequest()
+    $res : RouteResult(boxCode == null, routeLineId == $req.routeLineId)
+
+
+6. GÁN BIẾN (BIND VARIABLE)
+----------------------------
+Có thể bind giá trị field vào biến:
+    $req : RouteRequest($code : postcode)
+    eval($code >= 10000 && $code <= 19999)
+
+
+7. PHỦ ĐỊNH (NEGATION)
+-----------------------
+Dùng từ khóa `not` để phủ định:
+    not RouteResult(boxCode != null)
+
+→ Chỉ khớp nếu KHÔNG có RouteResult nào có boxCode khác null.
+
+
+8. TÓM TẮT
+-----------
+when
+    $req : RouteRequest()
+    eval($req.getPostcode() >= {startPostcode} && $req.getPostcode() <= {endPostcode})
+    $result : RouteResult(boxCode == null)
+then
+    $result.setBoxCode("{boxCode}");
+    update($result);
+
+Giải thích:
+- `$req`: fact đầu tiên
+- `eval(...)`: điều kiện Java để kiểm tra khoảng giá trị
+- `$result`: fact cần cập nhật
+- `update($result)`: báo Drools rằng object đã thay đổi để re-evaluate rule khác

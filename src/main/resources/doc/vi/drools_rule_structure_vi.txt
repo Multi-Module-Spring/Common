@@ -1,0 +1,86 @@
+====================================
+Cấu trúc file Drools (.drl)
+====================================
+
+1. PACKAGE
+-----------
+- Xác định namespace (không gian quy tắc) cho nhóm rule.
+- Nên đặt trùng với thư mục chứa file để dễ quản lý.
+Ví dụ:
+    package shipping.rules
+
+2. IMPORT
+----------
+- Khai báo các class Java sẽ được sử dụng trong rule.
+- Các object được insert vào KieSession phải thuộc những class này.
+Ví dụ:
+    import com.example.model.Order
+    import java.util.List
+
+3. GLOBAL (tuỳ chọn)
+---------------------
+- Khai báo biến toàn cục có thể truy cập trong tất cả rule.
+- Được truyền từ Java bằng KieSession.setGlobal().
+Ví dụ:
+    global java.util.List results
+
+4. DECLARE (tuỳ chọn)
+----------------------
+- Dùng để khai báo kiểu dữ liệu mới trong Drools khi không có class tương ứng trong Java.
+Ví dụ:
+    declare TempObject
+        field1 : String
+        field2 : int
+    end
+
+5. RULE BLOCK (phần định nghĩa rule)
+-------------------------------------
+Rule định nghĩa điều kiện (WHEN) và hành động (THEN).
+
+Cấu trúc tổng quát:
+    rule "<tên_rule>"
+        salience <mức_ưu_tiên>
+        no-loop <true|false>
+        when
+            <điều_kiện_kích_hoạt>
+        then
+            <hành_động_thực_thi>
+    end
+
+Giải thích:
+- rule "<tên_rule>": tên duy nhất cho mỗi rule.
+- salience: độ ưu tiên; số càng lớn chạy càng sớm (mặc định = 0).
+- no-loop: tránh rule tự kích hoạt lại chính nó.
+- when: phần điều kiện, mô tả các pattern hoặc biểu thức logic.
+- then: phần hành động, chứa các lệnh Java được thực thi khi điều kiện đúng.
+- end: kết thúc định nghĩa rule.
+
+6. CÁC TỪ KHÓA THƯỜNG DÙNG
+---------------------------
+- global           : khai báo biến toàn cục
+- dialect "java"   : chỉ định sử dụng cú pháp Java trong phần then
+- agenda-group     : nhóm các rule theo chức năng
+- activation-group : chỉ cho phép một rule trong nhóm được kích hoạt
+- enabled          : bật/tắt rule có điều kiện
+
+7. CẤU TRÚC CHUẨN MỘT FILE
+---------------------------
+package <namespace>
+
+import <các_class>
+
+global <các_biến>
+dialect "java"
+
+declare <kiểu_tự_khai_báo> (nếu có)
+    ...
+end
+
+rule "<tên_rule>"
+    salience <mức_ưu_tiên>
+    no-loop <true|false>
+    when
+        <điều_kiện>
+    then
+        <hành_động>
+end

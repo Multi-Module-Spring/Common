@@ -1,0 +1,86 @@
+====================================
+Drools Rule File Structure (.drl)
+====================================
+
+1. PACKAGE
+-----------
+- Defines the namespace for the rule set.
+- Should match the folder structure for better organization.
+Example:
+    package shipping.rules
+
+2. IMPORT
+----------
+- Imports Java classes that the rule file will use.
+- Facts inserted into KieSession should belong to these classes.
+Example:
+    import com.example.model.Order
+    import java.util.List
+
+3. GLOBAL (optional)
+---------------------
+- Defines global variables accessible in all rules.
+- Globals are injected from Java using KieSession.setGlobal().
+Example:
+    global java.util.List results
+
+4. DECLARE (optional)
+----------------------
+- Used to declare new data types inside Drools when no Java class exists.
+Example:
+    declare TempObject
+        field1 : String
+        field2 : int
+    end
+
+5. RULE BLOCK
+--------------
+A rule defines a condition (WHEN) and an action (THEN).
+
+General syntax:
+    rule "<rule_name>"
+        salience <priority_number>
+        no-loop <true|false>
+        when
+            <conditions to match>
+        then
+            <actions to execute>
+    end
+
+Explanation:
+- rule "<rule_name>": unique name for the rule.
+- salience: priority; higher runs earlier (default = 0).
+- no-loop: prevents rule from re-firing after its own update.
+- when: logical conditions or pattern matching expressions.
+- then: Java statements to execute when the conditions match.
+- end: terminates the rule definition.
+
+6. COMMON KEYWORDS AND OPTIONS
+-------------------------------
+- global        : declare global variable
+- dialect "java": use Java syntax in 'then' part
+- agenda-group  : group rules logically
+- activation-group: ensures only one rule in the group fires
+- enabled       : enable/disable rule conditionally
+
+7. TYPICAL FILE LAYOUT
+-----------------------
+package <namespace>
+
+import <classes>
+
+global <variables>
+dialect "java"
+
+declare <optional_new_type>
+    ...
+end
+
+rule "<rule_name>"
+    salience <priority>
+    no-loop <true|false>
+    when
+        <conditions>
+    then
+        <actions>
+end
