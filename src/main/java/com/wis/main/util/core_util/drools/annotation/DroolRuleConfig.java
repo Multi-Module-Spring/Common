@@ -7,6 +7,5 @@ import java.lang.annotation.*;
 public @interface DroolRuleConfig {
     String packageName() default "rule";
     String imports() default "";
-    String ruleNamePrefix() default "";
     Class<?> ruleSource();
 }
