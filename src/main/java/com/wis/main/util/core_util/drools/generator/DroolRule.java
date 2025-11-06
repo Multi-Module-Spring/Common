@@ -5,16 +5,18 @@ import com.wis.main.util.core_util.drools.model.Field;
 import com.wis.main.util.core_util.mapper.LambdaUtil;
 
 import java.lang.invoke.SerializedLambda;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DroolRule<T, E> {
 
     private final Class<T> requestType;
     private final Class<E> resultType;
+
+    private final List<String> patternConditions = new ArrayList<>();
     private final List<String> evalConditions = new ArrayList<>();
     private final List<String> thenParts = new ArrayList<>();
+
     private String packageName = "default_pkg";
     private String ruleName = "Rule_Default";
 
@@ -40,33 +42,76 @@ public class DroolRule<T, E> {
     // ===================== WHEN =====================
 
     public <R> DroolRule<T, E> whenEquals(Field<T, R> getter, Object value) {
-        String method = "get" + capitalize(LambdaUtil.extractFieldName(getter));
-        evalConditions.add(String.format("$req.%s() == %s", method, quoteIfString(value)));
+        addCondition(getter, "==", value);
         return this;
     }
 
     public <R> DroolRule<T, E> whenNotEquals(Field<T, R> getter, Object value) {
-        String method = "get" + capitalize(LambdaUtil.extractFieldName(getter));
-        evalConditions.add(String.format("$req.%s() != %s", method, quoteIfString(value)));
+        addCondition(getter, "!=", value);
         return this;
     }
 
-    public <R extends Number & Comparable<R>> DroolRule<T, E> whenRange(Field<T, R> getter, String start, String end) {
-        String method = "get" + capitalize(LambdaUtil.extractFieldName(getter));
-        evalConditions.add(String.format("$req.%s() >= %s && $req.%s() <= %s", method, start, method, end));
+    public <R extends Number & Comparable<R>> DroolRule<T, E> whenGreaterThan(Field<T, R> getter, Object value) {
+        addCondition(getter, ">", value);
+        return this;
+    }
+
+    public <R extends Number & Comparable<R>> DroolRule<T, E> whenGreaterOrEqual(Field<T, R> getter, Object value) {
+        addCondition(getter, ">=", value);
+        return this;
+    }
+
+    public <R extends Number & Comparable<R>> DroolRule<T, E> whenLessThan(Field<T, R> getter, Object value) {
+        addCondition(getter, "<", value);
+        return this;
+    }
+
+    public <R extends Number & Comparable<R>> DroolRule<T, E> whenLessOrEqual(Field<T, R> getter, Object value) {
+        addCondition(getter, "<=", value);
+        return this;
+    }
+
+    public <R extends Number & Comparable<R>> DroolRule<T, E> whenRange(Field<T, R> getter, Object start, Object end) {
+        String field = LambdaUtil.extractFieldName(getter);
+        patternConditions.add(String.format("%s >= %s, %s <= %s", field, start, field, end));
         return this;
     }
 
     public <R> DroolRule<T, E> whenIn(Field<T, R> getter, List<?> values) {
-        String method = "get" + capitalize(LambdaUtil.extractFieldName(getter));
+        String field = LambdaUtil.extractFieldName(getter);
         String joined = values.stream().map(this::quoteIfString).collect(Collectors.joining(", "));
-        evalConditions.add(String.format("java.util.List.of(%s).contains($req.%s())", joined, method));
+        patternConditions.add(String.format("%s in (%s)", field, joined));
+        return this;
+    }
+
+    public <R> DroolRule<T, E> whenNotIn(Field<T, R> getter, List<?> values) {
+        String field = LambdaUtil.extractFieldName(getter);
+        String joined = values.stream().map(this::quoteIfString).collect(Collectors.joining(", "));
+        patternConditions.add(String.format("%s not in (%s)", field, joined));
+        return this;
+    }
+
+    public <R> DroolRule<T, E> whenMatches(Field<T, R> getter, String regex) {
+        String field = LambdaUtil.extractFieldName(getter);
+        patternConditions.add(String.format("%s matches %s", field, quoteIfString(regex)));
+        return this;
+    }
+
+    public <R> DroolRule<T, E> whenContains(Field<T, R> getter, String substring) {
+        String method = "get" + capitalize(LambdaUtil.extractFieldName(getter));
+        evalConditions.add(String.format("$req.%s().contains(%s)", method, quoteIfString(substring)));
         return this;
     }
 
     public <R> DroolRule<T, E> whenNotNull(Field<T, R> getter) {
         String method = "get" + capitalize(LambdaUtil.extractFieldName(getter));
         evalConditions.add(String.format("$req.%s() != null", method));
+        return this;
+    }
+
+    public <R> DroolRule<T, E> whenIsNull(Field<T, R> getter) {
+        String method = "get" + capitalize(LambdaUtil.extractFieldName(getter));
+        evalConditions.add(String.format("$req.%s() == null", method));
         return this;
     }
 
@@ -87,8 +132,7 @@ public class DroolRule<T, E> {
             }
 
             String valStr = (value instanceof String) ? "\"" + value + "\"" : String.valueOf(value);
-            String action = String.format("$result.%s(%s);", implMethod, valStr);
-            thenParts.add(action);
+            thenParts.add(String.format("$result.%s(%s);", implMethod, valStr));
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse setter lambda: " + e.getMessage(), e);
         }
@@ -103,43 +147,51 @@ public class DroolRule<T, E> {
     // ===================== BUILD =====================
 
     public String build() {
-        String joinedEval = evalConditions.isEmpty()
-                ? ""
-                : "eval(" + String.join(" && ", evalConditions) + ")";
+        // combine pattern conditions + eval conditions
+        String patternStr = String.join(", ", patternConditions);
+        String evalStr = evalConditions.stream()
+                .map(s -> "eval(" + s + ")")
+                .collect(Collectors.joining("\n        "));
 
         String whenBlock = String.format(
-                "$req : %s()%s\n        $result : %s(boxCode == null)",
+                "$req : %s(%s)\n        %s\n        $result : %s(boxCode == null)",
                 requestType.getSimpleName(),
-                joinedEval.isEmpty() ? "" : "\n        " + joinedEval,
+                patternStr,
+                evalStr,
                 resultType.getSimpleName()
         );
 
         String thenBlock = String.join("\n        ", thenParts);
 
         return String.format("""
-                package %s;
+                        package %s;
 
-                import %s;
-                import %s;
+                        import %s;
+                        import %s;
 
-                rule "%s"
-                    when
-                        %s
-                    then
-                        %s
-                        update($result);
-                end
-                """,
+                        rule "%s"
+                            when
+                                %s
+                            then
+                                %s
+                                update($result);
+                        end
+                        """,
                 packageName,
                 requestType.getName(),
                 resultType.getName(),
                 ruleName,
-                whenBlock,
+                whenBlock.trim(),
                 thenBlock
         );
     }
 
     // ===================== UTIL =====================
+
+    private void addCondition(Field<T, ?> getter, String operator, Object value) {
+        String field = LambdaUtil.extractFieldName(getter);
+        patternConditions.add(String.format("%s %s %s", field, operator, quoteIfString(value)));
+    }
 
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) return str;
