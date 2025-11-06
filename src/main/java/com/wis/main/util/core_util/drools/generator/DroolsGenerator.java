@@ -35,9 +35,8 @@ public class DroolsGenerator<T> {
         sb.append("package ").append(meta.packageName()).append(";\n\n");
         sb.append(meta.imports()).append("\n\n");
 
-        int index = 0;
         for (T config : configs) {
-            String ruleContent = buildRule(meta, config, index++);
+            String ruleContent = buildRule(meta, config);
             sb.append(ruleContent).append("\n\n");
         }
 
@@ -48,7 +47,7 @@ public class DroolsGenerator<T> {
         System.out.println("[Drools] Generated annotated rule file: " + filePath.toAbsolutePath());
     }
 
-    private String buildRule(DroolRuleConfig meta, Object obj, int index) {
+    private String buildRule(DroolRuleConfig meta, Object obj) {
         try {
             if (meta.ruleSource() != void.class) {
                 Class<?> src = meta.ruleSource();
@@ -75,6 +74,7 @@ public class DroolsGenerator<T> {
                 if (!(ruleObj instanceof DroolRule<?, ?> rule)) {
                     throw new IllegalStateException("[Drools] buildRule() phải trả về DroolRule<?, ?>");
                 }
+                rule.pkg(meta.packageName());
 
                 String full = rule.build();
                 int startIndex = full.indexOf("rule ");
