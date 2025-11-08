@@ -6,6 +6,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DroolRuleConfig {
     String packageName() default "rule";
-    String imports() default "";
     Class<?> ruleSource();
 }

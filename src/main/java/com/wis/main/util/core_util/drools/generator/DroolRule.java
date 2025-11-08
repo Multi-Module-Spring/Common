@@ -164,11 +164,6 @@ public class DroolRule<T, E> {
         String thenBlock = String.join("\n        ", thenParts);
 
         return String.format("""
-                        package %s;
-
-                        import %s;
-                        import %s;
-
                         rule "%s"
                             when
                                 %s
@@ -177,12 +172,23 @@ public class DroolRule<T, E> {
                                 update($result);
                         end
                         """,
-                packageName,
-                requestType.getName(),
-                resultType.getName(),
                 ruleName,
                 whenBlock.trim(),
                 thenBlock
+        );
+    }
+
+    public String buildImport() {
+        return String.format("""
+                        package %s;
+                        
+                        import %s;
+                        import %s;
+                        
+                        """,
+                packageName,
+                requestType.getName(),
+                resultType.getName()
         );
     }
 

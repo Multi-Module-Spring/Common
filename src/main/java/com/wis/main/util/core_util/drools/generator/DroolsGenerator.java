@@ -32,8 +32,7 @@ public class DroolsGenerator<T> {
         subFix = meta.packageName() + "_" + subFix + ".drl";
 
         StringBuilder sb = new StringBuilder();
-        sb.append("package ").append(meta.packageName()).append(";\n\n");
-        sb.append(meta.imports()).append("\n\n");
+        sb.append(buildRuleHeader(meta,configs.getFirst()));
 
         for (T config : configs) {
             String ruleContent = buildRule(meta, config);
@@ -76,12 +75,46 @@ public class DroolsGenerator<T> {
                 }
                 rule.pkg(meta.packageName());
 
-                String full = rule.build();
-                int startIndex = full.indexOf("rule ");
-                if (startIndex == -1) {
-                    throw new RuntimeException("[Drools] Không tìm thấy rule trong output!");
+                return rule.build();
+            }
+
+            return StringUtil.BLANK;
+
+        } catch (Exception e) {
+            throw new RuntimeException("[Drools] 🔥 Error building rule: " + e.getMessage(), e);
+        }
+    }
+
+    private String buildRuleHeader(DroolRuleConfig meta, Object obj) {
+        try {
+            if (meta.ruleSource() != void.class) {
+                Class<?> src = meta.ruleSource();
+                Method method = null;
+
+                for (Method m : src.getDeclaredMethods()) {
+                    if (m.getName().equals("buildRule")) {
+                        method = m;
+                        break;
+                    }
                 }
-                return full.substring(startIndex).trim();
+
+                if (method == null) {
+                    throw new IllegalStateException("[Drools] Không tìm thấy buildRule trong " + src.getSimpleName());
+                }
+
+                Object ruleObj;
+                if (method.getParameterCount() == 1) {
+                    ruleObj = method.invoke(null, obj);
+                } else {
+                    ruleObj = method.invoke(null);
+                }
+
+                if (!(ruleObj instanceof DroolRule<?, ?> rule)) {
+                    throw new IllegalStateException("[Drools] buildRule() phải trả về DroolRule<?, ?>");
+                }
+                rule.pkg(meta.packageName());
+
+                return rule.buildImport();
             }
 
             return StringUtil.BLANK;
