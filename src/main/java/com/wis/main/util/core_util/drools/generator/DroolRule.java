@@ -154,7 +154,7 @@ public class DroolRule<T, E> {
                 .collect(Collectors.joining("\n        "));
 
         String whenBlock = String.format(
-                "$req : %s(%s)\n        %s\n        $result : %s(boxCode == null)",
+                "$req : %s(%s)\n        %s\n        $result : %s()",
                 requestType.getSimpleName(),
                 patternStr,
                 evalStr,
