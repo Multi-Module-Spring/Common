@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 public class DroolServiceImpl implements DroolService {
     private KieContainer kieContainer;
 
-    @Value("${drools.route.rule-path}")
+    @Value("${drools.route.rule-path:./rules}")
     private String rulePath;
 
     @Override

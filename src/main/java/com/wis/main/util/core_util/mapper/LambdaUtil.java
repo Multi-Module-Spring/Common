@@ -50,5 +50,10 @@ public class LambdaUtil {
         }
     }
 
+    public static String extractLambdaName(String lambda) {
+        int idx = lambda.lastIndexOf("::");
+        return idx > 0 ? lambda.substring(idx + 2) : "Unknown";
+    }
+
 }
 

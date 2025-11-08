@@ -109,49 +109,76 @@ public class MessageUtilImpl implements MessageUtil {
         try (InputStream is = resource.getInputStream();
              Workbook workbook = new XSSFWorkbook(is)) {
 
-            Sheet sheet = workbook.getSheetAt(0);
-            Row header = sheet.getRow(0);
+            int sheetCount = workbook.getNumberOfSheets();
+            for (int s = 0; s < sheetCount; s++) {
+                Sheet sheet = workbook.getSheetAt(s);
+                if (sheet == null) continue;
 
-            Map<Integer, Language> columnLangMap = new HashMap<>();
-            for (int col = 1; col < header.getLastCellNum(); col++) {
-                String langCode = header.getCell(col).getStringCellValue().toUpperCase(Locale.ROOT);
-                try {
-                    Language lang = Language.valueOf(langCode);
-                    columnLangMap.put(col, lang);
-                } catch (IllegalArgumentException ex) {
-                    log.warn("Skipping column {} with header '{}' cuz not match with Enum Language", col, langCode);
+                String sheetName = sheet.getSheetName();
+                Row header = sheet.getRow(0);
+                if (header == null) {
+                    log.warn("Skipping empty sheet '{}' in {}", sheetName, resource.getFilename());
+                    continue;
                 }
+
+                Map<Integer, Language> columnLangMap = new HashMap<>();
+                for (int col = 1; col < header.getLastCellNum(); col++) {
+                    Cell cell = header.getCell(col);
+                    if (cell == null) continue;
+                    String langCode = cell.getStringCellValue();
+                    if (langCode == null || langCode.isBlank()) continue;
+
+                    langCode = langCode.toUpperCase(Locale.ROOT);
+                    try {
+                        Language lang = Language.valueOf(langCode);
+                        columnLangMap.put(col, lang);
+                    } catch (IllegalArgumentException ex) {
+                        log.warn("Skipping column {} with header '{}' in sheet '{}' (not match with Enum Language)",
+                                col, langCode, sheetName);
+                    }
+                }
+
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    Cell keyCell = row.getCell(0);
+                    if (keyCell == null) continue;
+                    String key = keyCell.getStringCellValue();
+                    if (key == null || key.isBlank()) continue;
+
+                    for (Map.Entry<Integer, Language> entry : columnLangMap.entrySet()) {
+                        int colIndex = entry.getKey();
+                        Language lang = entry.getValue();
+
+                        Cell cell = row.getCell(colIndex);
+                        if (cell == null) continue;
+
+                        String value = cell.getStringCellValue();
+                        if (value == null) continue;
+
+                        translations
+                                .computeIfAbsent(key, k -> new HashMap<>())
+                                .put(lang.name(), value);
+                    }
+
+                    boolean isCommon = resource.getFilename() != null
+                            && resource.getFilename().toLowerCase().contains("common");
+                    if (isCommon) {
+                        initialKeys.add(key);
+                    }
+                }
+
+                log.info("→ Loaded sheet '{}' from file {}", sheetName, resource.getFilename());
             }
 
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
+            log.info("✅ Completed file i18n: {} ({} sheet(s))", resource.getFilename(), sheetCount);
 
-                String key = row.getCell(0).getStringCellValue();
-            if (key == null || key.isBlank()) continue;
-
-            for (Map.Entry<Integer, Language> entry : columnLangMap.entrySet()) {
-                int colIndex = entry.getKey();
-                Language lang = entry.getValue();
-
-                Cell cell = row.getCell(colIndex);
-                if (cell == null) continue;
-
-                String value = cell.getStringCellValue();
-                translations
-                        .computeIfAbsent(key, k -> new HashMap<>())
-                        .put(lang.name(), value);
-            }
-                boolean isCommon = resource.getFilename() != null
-                        && resource.getFilename().toLowerCase().contains("common");
-                if(isCommon) initialKeys.add(key);
-            }
-
-            log.info("Loaded file i18n: {}", resource.getFilename());
         } catch (Exception e) {
-                log.error("Error reading file i18n: {}", resource.getFilename(), e);
+            log.error("❌ Error reading file i18n: {}", resource.getFilename(), e);
         }
     }
+
 
     @Override
     public void importExcel(InputStream is, String filename) {

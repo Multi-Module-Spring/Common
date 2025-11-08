@@ -29,8 +29,8 @@ public class I18nCommonCodeGenerator {
     }
 
     public void generate() throws IOException {
-        Map<String, String> entriesTranslateCommon = new TreeMap<>();
-        Map<String, String> entriesKeyTranslateCommon = new TreeMap<>();
+        Map<String, List<Map.Entry<String, String>>> entriesTranslateCommonBySheet = new LinkedHashMap<>();
+        Map<String, List<Map.Entry<String, String>>> entriesKeyTranslateCommonBySheet = new LinkedHashMap<>();
         int totalFiles = 0;
 
         for (String i18nDir : I18N_PATHS) {
@@ -51,61 +51,78 @@ public class I18nCommonCodeGenerator {
                 for (Path file : xlsxFiles) {
                     totalFiles++;
                     System.out.println("Reading file: " + file);
-                    processExcelFile(file, entriesTranslateCommon, entriesKeyTranslateCommon);
+                    processExcelFile(file, entriesTranslateCommonBySheet, entriesKeyTranslateCommonBySheet);
                 }
             }
         }
 
-        generateEnumFile(OUTPUT_PATH_TRANSLATE_COMMON, entriesTranslateCommon, "TranslateCommon");
-        generateEnumFile(OUTPUT_PATH_KEYTRANSLATE_COMMON, entriesKeyTranslateCommon, "KeyTranslateCommon");
+        generateEnumFile(OUTPUT_PATH_TRANSLATE_COMMON, entriesTranslateCommonBySheet, "TranslateCommon");
+        generateEnumFile(OUTPUT_PATH_KEYTRANSLATE_COMMON, entriesKeyTranslateCommonBySheet, "KeyTranslateCommon");
         generateCommonExceptionFile();
 
+        int totalTranslate = entriesTranslateCommonBySheet.values().stream().mapToInt(List::size).sum();
+        int totalKeyTranslate = entriesKeyTranslateCommonBySheet.values().stream().mapToInt(List::size).sum();
+
         System.out.printf("\nSummary: %d in TranslateCommon, %d in KeyTranslateCommon from %d Excel file(s).%n",
-                entriesTranslateCommon.size(), entriesKeyTranslateCommon.size(), totalFiles);
+                totalTranslate, totalKeyTranslate, totalFiles);
     }
 
-    private void processExcelFile(Path file, Map<String, String> entriesTranslate,
-                                  Map<String, String> entriesKeyTranslate) {
+    private void processExcelFile(Path file,
+                                  Map<String, List<Map.Entry<String, String>>> entriesTranslate,
+                                  Map<String, List<Map.Entry<String, String>>> entriesKeyTranslate) {
         try (FileInputStream fis = new FileInputStream(file.toFile());
              Workbook workbook = new XSSFWorkbook(fis)) {
 
-            Sheet sheet = workbook.getSheetAt(0);
-            Row headerRow = sheet.getRow(0);
-            if (headerRow == null) return;
+            for (int s = 0; s < workbook.getNumberOfSheets(); s++) {
+                Sheet sheet = workbook.getSheetAt(s);
+                if (sheet == null) continue;
+                String sheetName = sheet.getSheetName();
 
-            Map<String, Integer> columnMap = new HashMap<>();
-            for (Cell cell : headerRow) {
-                String header = getCellValueAsString(cell).trim().toLowerCase();
-                columnMap.put(header, cell.getColumnIndex());
-            }
+                Row headerRow = sheet.getRow(0);
+                if (headerRow == null) continue;
 
-            Integer keyIdx = columnMap.get("key");
-            Integer viIdx = columnMap.get("vi_vn");
-            Integer errIdx = columnMap.get("is_error");
-
-            if (keyIdx == null || viIdx == null) {
-                System.out.println("Missing column 'key' or 'vi_vn' in " + file.getFileName());
-                return;
-            }
-
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
-
-                String key = getCellValue(row, keyIdx);
-                String viVal = getCellValue(row, viIdx);
-                String isError = errIdx != null ? getCellValue(row, errIdx) : null;
-
-                if (key == null || key.trim().isEmpty()) continue;
-
-                key = key.trim();
-                viVal = viVal != null && !viVal.trim().isEmpty() ? viVal.trim() : key;
-
-                if ("true".equalsIgnoreCase(isError)) {
-                    entriesTranslate.put(key, viVal);
-                } else {
-                    entriesKeyTranslate.put(key, viVal);
+                Map<String, Integer> columnMap = new HashMap<>();
+                for (Cell cell : headerRow) {
+                    String header = getCellValueAsString(cell).trim().toLowerCase();
+                    columnMap.put(header, cell.getColumnIndex());
                 }
+
+                Integer keyIdx = columnMap.get("key");
+                Integer viIdx = columnMap.get("vi_vn");
+                Integer errIdx = columnMap.get("is_error");
+
+                if (keyIdx == null || viIdx == null) {
+                    System.out.println("Missing column 'key' or 'vi_vn' in " + file.getFileName() + " (Sheet: " + sheetName + ")");
+                    continue;
+                }
+
+                List<Map.Entry<String, String>> transList =
+                        entriesTranslate.computeIfAbsent(sheetName, k -> new ArrayList<>());
+                List<Map.Entry<String, String>> keyList =
+                        entriesKeyTranslate.computeIfAbsent(sheetName, k -> new ArrayList<>());
+
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    String key = getCellValue(row, keyIdx);
+                    String viVal = getCellValue(row, viIdx);
+                    String isError = errIdx != null ? getCellValue(row, errIdx) : null;
+
+                    if (key == null || key.trim().isEmpty()) continue;
+
+                    key = key.trim();
+                    viVal = viVal != null && !viVal.trim().isEmpty() ? viVal.trim() : key;
+
+                    if ("true".equalsIgnoreCase(isError)) {
+                        transList.add(Map.entry(key, viVal));
+                    } else {
+                        keyList.add(Map.entry(key, viVal));
+                    }
+                }
+
+                System.out.println("  -> Loaded sheet: " + sheetName +
+                        " | " + transList.size() + " error, " + keyList.size() + " normal keys.");
             }
 
         } catch (Exception e) {
@@ -121,7 +138,6 @@ public class I18nCommonCodeGenerator {
 
     private String getCellValueAsString(Cell cell) {
         if (cell == null) return "";
-
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue();
             case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
@@ -135,15 +151,15 @@ public class I18nCommonCodeGenerator {
         String s = key.replaceAll("[^A-Za-z0-9]", "_");
         s = s.replaceAll("_+", "_").toUpperCase();
         s = s.replaceAll("^_+|_+$", "");
-
         if (s.isEmpty()) s = "KEY";
         if (Character.isDigit(s.charAt(0))) s = "K_" + s;
-
         return s;
     }
 
-    private void generateEnumFile(String outputPath, Map<String, String> entries, String enumName) throws IOException {
-        if (entries.isEmpty()) {
+    private void generateEnumFile(String outputPath,
+                                  Map<String, List<Map.Entry<String, String>>> entriesBySheet,
+                                  String enumName) throws IOException {
+        if (entriesBySheet.isEmpty()) {
             System.out.println("No entries for " + enumName + ", skipped.");
             return;
         }
@@ -159,19 +175,29 @@ public class I18nCommonCodeGenerator {
             writer.write("@Getter\n@AllArgsConstructor\n@ToString\n");
             writer.write("public enum " + enumName + " {\n\n");
 
-            List<Map.Entry<String, String>> items = new ArrayList<>(entries.entrySet());
-            for (int i = 0; i < items.size(); i++) {
-                Map.Entry<String, String> entry = items.get(i);
-                String enumKey = toEnumName(entry.getKey());
-                String value = entry.getValue().replace("\\", "\\\\").replace("\"", "\\\"");
-                String separator = (i == items.size() - 1) ? ";" : ",";
-                writer.write(String.format("    %s(\"%s\")%s\n", enumKey, value, separator));
+            boolean firstSheet = true;
+            for (Map.Entry<String, List<Map.Entry<String, String>>> sheetEntry : entriesBySheet.entrySet()) {
+                String sheetName = sheetEntry.getKey();
+                List<Map.Entry<String, String>> items = sheetEntry.getValue();
+                if (items.isEmpty()) continue;
+
+                if (!firstSheet) writer.write("\n");
+                firstSheet = false;
+
+                writer.write("    // ===== Sheet: " + sheetName + " =====\n");
+                for (int i = 0; i < items.size(); i++) {
+                    Map.Entry<String, String> entry = items.get(i);
+                    String enumKey = toEnumName(entry.getKey());
+                    String value = entry.getValue().replace("\\", "\\\\").replace("\"", "\\\"");
+                    writer.write(String.format("    %s(\"%s\"),\n", enumKey, value));
+                }
             }
 
-            writer.write("\n    private final String description;\n}\n");
+            writer.write("\n    ;\n\n    private final String description;\n}\n");
         }
 
-        System.out.println("Created file: " + outputPath + " (" + entries.size() + " keys)");
+        System.out.println("Created file: " + outputPath + " (" +
+                entriesBySheet.values().stream().mapToInt(List::size).sum() + " keys)");
     }
 
     private void generateCommonExceptionFile() throws IOException {
