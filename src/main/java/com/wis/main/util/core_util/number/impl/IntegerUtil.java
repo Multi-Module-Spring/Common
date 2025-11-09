@@ -21,26 +21,30 @@ public class IntegerUtil implements NumberUtil<Integer> {
 
     @Override
     public <V> Integer parse(V v) {
-        if (v == null) {
-            return null;
-        }
-        if (v instanceof BigDecimal) {
-            return ((BigDecimal) v).intValue();
-        }
-        if (v instanceof BigInteger) {
-            return ((BigInteger) v).intValue();
-        }
-        if (v instanceof Double) {
-            return ((Double) v).intValue();
-        }
-        if (v instanceof Float) {
-            return ((Float) v).intValue();
-        }
-        if (v instanceof Long) {
-            return ((Long) v).intValue();
-        }
-        if (v instanceof Integer) {
-            return (Integer) v;
+        switch (v) {
+            case null -> {
+                return null;
+            }
+            case BigDecimal bigDecimal -> {
+                return bigDecimal.intValue();
+            }
+            case BigInteger bigInteger -> {
+                return bigInteger.intValue();
+            }
+            case Double aDouble -> {
+                return aDouble.intValue();
+            }
+            case Float aFloat -> {
+                return aFloat.intValue();
+            }
+            case Long l -> {
+                return l.intValue();
+            }
+            case Integer i -> {
+                return i;
+            }
+            default -> {
+            }
         }
         String s = stringUtil.nvl(v);
         if (stringUtil.isEmpty(s)) {
