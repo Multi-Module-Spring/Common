@@ -3,6 +3,8 @@ package com.wis.main.model.core;
 import ch.qos.logback.core.util.StringUtil;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.wis.i18n.TranslateCommon;
+import com.wis.i18n.exception.TranslateCommonException;
 import com.wis.main.util.core_util.Constant;
 import com.wis.main.exception.ServiceException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +40,7 @@ public class RootUser {
                 || StringUtil.isNullOrEmpty(role)
                 || StringUtil.isNullOrEmpty(countryCode)) {
 
-            throw ServiceException.of(HttpStatus.UNAUTHORIZED, "MISSING_AUTHORITY");
+            throw new TranslateCommonException(HttpStatus.UNAUTHORIZED, TranslateCommon.MISSING_AUTHORITY);
         }
 
         return RootUser.builder()
