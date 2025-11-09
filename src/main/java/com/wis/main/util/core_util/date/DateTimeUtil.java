@@ -38,7 +38,7 @@ public interface DateTimeUtil {
     }
 
     default LocalDateTime now() {
-        return LocalDateTime.now(Zone.UTC);
+        return LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     default LocalDateTime now(ZoneId zone) {

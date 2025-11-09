@@ -42,7 +42,7 @@ public class DBPool {
 
         } catch (SQLException e) {
             log.error(e.getMessage());
-            throw new TranslateCommonException(HttpStatus.BAD_REQUEST,TranslateCommon.BAD_REQUEST);
+            throw new TranslateCommonException(HttpStatus.BAD_REQUEST, TranslateCommon.BAD_REQUEST);
         }
     }
 
@@ -54,6 +54,10 @@ public class DBPool {
         if (pagingContext.get() != null) {
             sql = applyPagingWithCount(sql);
         }
+        log.info("[SQL_EXECUTE] Called from: {}", getCallerInfo());
+        log.info("[SQL_EXECUTE] Target class: {}", clazzTobeMapped.getSimpleName());
+        log.info("[SQL_EXECUTE] SQL: {}", sql);
+        log.info("[SQL_EXECUTE] Params: {}", params);
         sql = convertPostgresStyle(sql, params.length);
 
         try (Connection conn = databaseUtil.getConnection();
