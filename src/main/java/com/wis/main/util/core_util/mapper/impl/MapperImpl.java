@@ -5,10 +5,13 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.wis.i18n.TranslateCommon;
+import com.wis.i18n.exception.TranslateCommonException;
 import com.wis.main.util.core_util.mapper.JsonUtils;
 import com.wis.main.util.core_util.mapper.LocalDateTimeWithoutZoneDeserializer;
 import com.wis.main.util.core_util.mapper.Mapper;
 import com.wis.main.util.core_util.mapper.MappingStrategy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -108,6 +111,21 @@ public class MapperImpl implements Mapper {
     @Override
     public <F, T> Function<F, T> mapTo(Class<T> type, MappingStrategy strategy) {
         return from -> mapper(strategy).convertValue(from, type);
+    }
+
+    @Override
+    public <F, T> List<T> mapToList(F from, Class<T> type) {
+        return mapToList(from, type, MappingStrategy.DEFAULT);
+    }
+
+    @Override
+    public <F, T> List<T> mapToList(F from, Class<T> type, MappingStrategy strategy) {
+        if (!(from instanceof List<?>)) {
+            throw new TranslateCommonException(HttpStatus.CONFLICT, TranslateCommon.MUST_BE_LIST,from.getClass().getName());
+        }
+        ObjectMapper objectMapper = mapper(strategy);
+        return objectMapper.convertValue(from, objectMapper.getTypeFactory()
+                .constructCollectionType(List.class, type));
     }
 
     @Override

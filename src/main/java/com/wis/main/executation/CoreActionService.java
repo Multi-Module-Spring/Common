@@ -1,13 +1,13 @@
 package com.wis.main.executation;
 
 import com.wis.main.configuration.Payload;
-import com.wis.main.util.core_util.CoreRepository;
+import com.wis.main.util.core_util.CoreBean;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 
 @Slf4j
-public abstract class CoreActionService<REQUEST, ACTION_MODEL, MODEL> extends CoreRepository implements ActionService<REQUEST, MODEL> {
+public abstract class CoreActionService<REQUEST, ACTION_MODEL, MODEL> extends CoreBean implements ActionService<REQUEST, MODEL> {
 
     @Override
     public MODEL execute(Payload payload, REQUEST request) {

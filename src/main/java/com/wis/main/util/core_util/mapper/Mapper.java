@@ -1,5 +1,6 @@
 package com.wis.main.util.core_util.mapper;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -24,6 +25,10 @@ public interface Mapper {
     <F, T> Function<F, T> mapTo(Class<T> type);
 
     <F, T> Function<F, T> mapTo(Class<T> type, MappingStrategy strategy);
+
+    <F, T> List<T> mapToList(F from, Class<T> type);
+
+    <F, T> List<T> mapToList(F from, Class<T> type, MappingStrategy strategy);
 
     <F, T> T updateValue(T to, F from);
 
