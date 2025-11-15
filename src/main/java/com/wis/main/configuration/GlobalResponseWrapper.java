@@ -2,7 +2,7 @@ package com.wis.main.configuration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wis.main.exception.ErrorResponse;
+import com.wis.main.exception.model.ErrorResponse;
 import com.wis.main.model.core.ApiResponse;
 import com.wis.main.util.core_util.paging.PagingContext;
 import lombok.RequiredArgsConstructor;

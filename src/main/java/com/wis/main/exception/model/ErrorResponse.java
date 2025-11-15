@@ -1,4 +1,4 @@
-package com.wis.main.exception;
+package com.wis.main.exception.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;

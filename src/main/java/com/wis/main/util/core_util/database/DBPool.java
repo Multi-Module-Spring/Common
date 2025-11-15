@@ -1,6 +1,6 @@
 package com.wis.main.util.core_util.database;
 
-import com.wis.main.exception.ServiceException;
+import com.wis.main.exception.model.ServiceException;
 import com.wis.main.model.core.PagingInfo;
 import com.wis.main.util.core_util.mapper.Mapper;
 import com.wis.main.util.core_util.paging.PagingContext;

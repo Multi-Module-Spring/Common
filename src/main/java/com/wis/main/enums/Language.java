@@ -1,6 +1,6 @@
 package com.wis.main.enums;
 
-import com.wis.main.exception.ServiceException;
+import com.wis.main.exception.model.ServiceException;
 import com.wis.i18n.TranslateCommon;
 import com.wis.i18n.exception.TranslateCommonException;
 import lombok.Getter;

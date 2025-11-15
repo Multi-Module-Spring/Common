@@ -1,8 +1,8 @@
-package com.wis.main.exception.service.impl;
+package com.wis.main.exception.action.impl;
 
 import com.wis.main.configuration.Payload;
-import com.wis.main.exception.ErrorResponse;
-import com.wis.main.exception.service.GlobalExceptionService;
+import com.wis.main.exception.model.ErrorResponse;
+import com.wis.main.exception.action.TranslateExceptionService;
 import com.wis.main.executation.CoreActionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class GlobalExceptionServiceImpl extends CoreActionService<ErrorResponse,ErrorResponse,ErrorResponse> implements GlobalExceptionService {
+public class TranslateExceptionServiceImpl extends CoreActionService<ErrorResponse,ErrorResponse,ErrorResponse> implements TranslateExceptionService {
     @Override
     protected ErrorResponse verify(Payload payload, ErrorResponse errorResponse, LocalDateTime now) {
         return errorResponse;

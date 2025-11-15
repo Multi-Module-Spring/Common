@@ -213,7 +213,7 @@ public class I18nCommonCodeGenerator {
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             writer.write("package " + EXCEPTION_PACKAGE + ";\n\n");
             writer.write("import com.wis.i18n.TranslateCommon;\n");
-            writer.write("import com.wis.main.exception.ServiceException;\n");
+            writer.write("import com.wis.main.exception.model.ServiceException;\n");
             writer.write("import org.springframework.http.HttpStatus;\n");
             writer.write("import java.util.List;\n");
             writer.write("import java.util.Arrays;\n\n");

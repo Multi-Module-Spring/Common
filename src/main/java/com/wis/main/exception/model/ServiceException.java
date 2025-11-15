@@ -1,4 +1,4 @@
-package com.wis.main.exception;
+package com.wis.main.exception.model;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

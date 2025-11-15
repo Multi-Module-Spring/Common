@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.wis.i18n.TranslateCommon;
 import com.wis.i18n.exception.TranslateCommonException;
 import com.wis.main.util.core_util.Constant;
-import com.wis.main.exception.ServiceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.*;
 import org.springframework.http.HttpStatus;
