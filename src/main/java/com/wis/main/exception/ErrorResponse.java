@@ -3,6 +3,7 @@ package com.wis.main.exception;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.wis.main.annotation.I18n;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,11 +21,13 @@ public class ErrorResponse {
     private final LocalDateTime timestamp;
     private final int status;
     private final String error;
-    private final String message;
+    @I18n(args = "args",defaultValue = "logBug")
+    private String message;
     private final String method;
     private final String path;
     private final String errorCode;
     private final String logBug;
+    private final List<Object> args;
 
     public static ErrorResponse of(int status, String error, String message, String path, String errorCode) {
         return ErrorResponse.builder()
@@ -54,18 +57,20 @@ public class ErrorResponse {
 
     public static ErrorResponse of(int status, String error, String message, String path,HttpMethod method, String errorCode, String logBug) {
         log.error(logBug);
-        return of(status,error,message,path,method,errorCode,List.of());
+        return of(status,error,message,path,method,errorCode,logBug,List.of());
     }
 
-    public static ErrorResponse of(int status, String error, String message, String path, HttpMethod method, String errorCode, List<Object> args) {
+    public static ErrorResponse of(int status, String error, String message, String path, HttpMethod method, String errorCode,String detail, List<Object> args) {
         return ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status)
                 .error(error)
-                .message(String.format(message, args))
+                .message(message)
                 .path(path)
                 .method(method.name())
                 .errorCode(errorCode)
+                .args(args)
+                .logBug(detail)
                 .build();
     }
 }

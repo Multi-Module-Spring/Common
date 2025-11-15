@@ -32,13 +32,6 @@ import java.lang.annotation.ElementType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface I18n {
-
-    /**
-     * The name of the message bundle (e.g., "message" → message.properties).
-     * Default is "message".
-     */
-    String bundle() default "message";
-
     /**
      * The list of argument names to be used as parameters when resolving
      * the message. These refer to other field names in the same object.
@@ -47,5 +40,6 @@ public @interface I18n {
      * For example: {"__Admin"} → will pass "Admin" as a fixed argument.
      */
     String[] args() default {};
+    String defaultValue() default "";
 }
 

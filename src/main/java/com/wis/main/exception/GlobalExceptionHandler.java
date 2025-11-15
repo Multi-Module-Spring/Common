@@ -1,5 +1,7 @@
 package com.wis.main.exception;
 
+import com.wis.main.configuration.Payload;
+import com.wis.main.exception.service.GlobalExceptionService;
 import com.wis.main.util.core_util.CoreBean;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -15,20 +17,22 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @RequiredArgsConstructor
 @Log4j2
 public class GlobalExceptionHandler extends CoreBean {
+    private final GlobalExceptionService globalExceptionService;
 
     @ExceptionHandler(ServiceException.class)
     public ResponseEntity<?> handleServiceException(ServiceException ex, HttpServletRequest request) {
-
-        String resolvedMessage = messageUtil.getI18n(ex.getStringKey(),ex.getDetail(), ex.getArgs());
         ErrorResponse errorResponse = ErrorResponse.of(
                 ex.getHttpStatus().value(),
                 ex.getHttpStatus().getReasonPhrase(),
-                resolvedMessage,
+                ex.getStringKey(),
                 request.getRequestURI(),
                 HttpMethod.valueOf(request.getMethod()),
                 ex.getStringKey(),
-                ex.getDetail()
+                ex.getDetail(),
+                ex.getArgs()
         );
+
+        errorResponse = globalExceptionService.execute(new Payload(),errorResponse);
         return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
     }
 
@@ -36,16 +40,16 @@ public class GlobalExceptionHandler extends CoreBean {
     public ResponseEntity<ErrorResponse> handleUnhandledException(Exception ex, HttpServletRequest request) {
 
         String defaultKey = HttpStatus.BAD_REQUEST.name();
-        String message = messageUtil.getI18n(defaultKey,ex.getMessage());
         ErrorResponse errorResponse = ErrorResponse.of(
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                message,
+                defaultKey,
                 request.getRequestURI(),
                 HttpMethod.valueOf(request.getMethod()),
                 defaultKey,
                 ex.getMessage()
         );
+        errorResponse = globalExceptionService.execute(new Payload(),errorResponse);
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
