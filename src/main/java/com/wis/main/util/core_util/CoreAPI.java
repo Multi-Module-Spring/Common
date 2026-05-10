@@ -41,6 +41,7 @@ public abstract class CoreAPI extends CoreBean {
                 .username(stringUtil.nvl(user == null ? null : user.getUsername()))
                 .countryCode(stringUtil.nvl(user == null ? null : user.getCountryCode()))
                 .email(stringUtil.nvl(user == null ? null : user.getEmail()))
+                .tenantId(integerUtil.nvl(user == null ? 0 :user.getTenantId()))
                 .requestedAt(System.currentTimeMillis())
                 .build();
     }

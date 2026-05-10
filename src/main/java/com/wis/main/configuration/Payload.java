@@ -24,6 +24,7 @@ public class Payload {
     private String userId;
     private String username;
     private String countryCode;
+    private Integer tenantId =0;
     private String email;
     private long requestedAt;
 }

@@ -77,7 +77,6 @@ public abstract class CoreBean {
     }
 
     protected <V> V verifyNotNull(Supplier<V> supplier) {
-        try {
             V value = supplier.get();
             if (value == null) {
                 String lambda = supplier.toString();
@@ -89,9 +88,6 @@ public abstract class CoreBean {
                 );
             }
             return value;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to evaluate variable", e);
-        }
     }
 
     public static String buildSelectFromClass(Class<?> clazz, String tableAlias) {

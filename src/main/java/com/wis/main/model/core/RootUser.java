@@ -22,6 +22,7 @@ public class RootUser {
     private String phone;
     private String email;
     private String role;
+    private Integer tenantId;
     private String countryCode;
 
     public static RootUser fromHeader(HttpServletRequest request) {
@@ -31,6 +32,7 @@ public class RootUser {
         String email       = request.getHeader(Constant.HEADER_JWT_EMAIL);
         String role        = request.getHeader(Constant.HEADER_JWT_ROLE);
         String countryCode = request.getHeader(Constant.HEADER_JWT_COUNTRY_CODE);
+        Integer tenantId    = request.getIntHeader(Constant.HEADER_JWT_TENANT_ID) == -1 ? 0 : request.getIntHeader(Constant.HEADER_JWT_TENANT_ID);
 
         if (StringUtil.isNullOrEmpty(userId)
                 || StringUtil.isNullOrEmpty(username)
@@ -49,6 +51,7 @@ public class RootUser {
                 .email(email)
                 .phone(phone)
                 .role(role)
+                .tenantId(tenantId)
                 .build();
     }
 }

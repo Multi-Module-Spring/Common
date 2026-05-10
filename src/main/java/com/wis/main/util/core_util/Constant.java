@@ -8,6 +8,7 @@ public class Constant {
     public static final String HEADER_JWT_PHONE       = "X-Authen-JWT-cth-phone";
     public static final String HEADER_JWT_EMAIL       = "X-Authen-JWT-cth-email";
     public static final String HEADER_JWT_ROLE        = "X-Authen-JWT-cth-role";
+    public static final String HEADER_JWT_TENANT_ID        = "X-Authen-JWT-cth-tenant-id";
     public static final String HEADER_JWT_COUNTRY_CODE = "X-Authen-JWT-cth-country-code";
     public static final String SIGN_METHOD_HMAC_SHA256 = "HmacSHA256";
     public static final String SIGN_METHOD_SHA256 = "sha256";
